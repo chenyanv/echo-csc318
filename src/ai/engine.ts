@@ -7,6 +7,7 @@ import {
 } from "@mlc-ai/web-llm";
 
 export { checkDeviceSupport, type DeviceSupport } from "./device";
+import { markModelSaved } from "./modelCache";
 
 export const isModelCached = (modelId: string) => hasModelInCache(modelId);
 
@@ -30,7 +31,14 @@ export async function loadModel(
     );
   }
   loadedModelId = modelId;
+  markModelSaved();
   return engine;
+}
+
+/** Frees the model from memory (used before deleting it from the device). */
+export async function unloadModel(): Promise<void> {
+  if (engine) await engine.unload();
+  loadedModelId = null;
 }
 
 export function currentModelId() {

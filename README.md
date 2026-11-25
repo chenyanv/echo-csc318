@@ -26,7 +26,8 @@ The app is a static site, so any static host works. Vercel picks up `vercel.json
 Echo's AI (Llama 3.2 1B, via [WebLLM](https://github.com/mlc-ai/web-llm)) runs in the browser on WebGPU.
 Nothing is sent to a server.
 
-- The first load downloads about 670 MB, then it's cached by the browser.
+- The first load downloads about 670 MB. It's kept for **7 days** after download, then removed
+  automatically. People can also remove it anytime from **Profile → Echo on this device**.
 - Works best in recent Chrome or Edge on a laptop. Where WebGPU isn't available, Echo switches to
   pre-written **demo replies**, and the whole flow still works.
 - The model only writes Echo's questions. Anything an Echo says *about a person* is built from their

@@ -4,6 +4,9 @@ import { Chip } from "../components/ui/Chip";
 import { PageTitle } from "../components/ui/PageHeader";
 import { GOALS, PACES } from "../data/profiles";
 import { useStore } from "../state/store";
+import { useState } from "react";
+import { removeEchoFromDevice, useEchoStatus, ECHO_DOWNLOAD_MB } from "../ai/useEcho";
+import { modelExpiresAt, modelSavedAt, MODEL_TTL_DAYS } from "../ai/modelCache";
 
 export default function Profile() {
   const { state, loadPreset } = useStore();
@@ -34,6 +37,8 @@ export default function Profile() {
           Edit profile
         </button>
       </div>
+
+      <EchoOnDevice />
 
       <div className="card mt-4 p-5">
         <p className="font-semibold">For researchers</p>
@@ -68,6 +73,52 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     <div>
       <dt className="text-[13px] font-medium text-muted">{label}</dt>
       <dd className="mt-1">{children}</dd>
+    </div>
+  );
+}
+
+function EchoOnDevice() {
+  const ai = useEchoStatus();
+  const [removing, setRemoving] = useState(false);
+  const [removed, setRemoved] = useState(false);
+  const saved = modelSavedAt();
+  const expires = modelExpiresAt();
+  const fmt = (t: number) => new Date(t).toLocaleDateString("en-CA", { month: "short", day: "numeric" });
+  const onDevice = ai.cached || ai.phase === "ready";
+
+  return (
+    <div className="card mt-4 p-5">
+      <p className="font-semibold">Echo on this device</p>
+      <p className="mt-1 text-sm text-muted">
+        Echo's AI runs in your browser, so your chats with Echo stay on this device.
+      </p>
+      {onDevice ? (
+        <>
+          <p className="mt-3 text-[15px]">
+            The model (about {ECHO_DOWNLOAD_MB} MB) is saved here
+            {saved && expires ? `. Downloaded ${fmt(saved)}, removed automatically on ${fmt(expires)}.` : "."}
+          </p>
+          <button
+            type="button"
+            className="btn-secondary mt-3"
+            disabled={removing}
+            onClick={async () => {
+              setRemoving(true);
+              await removeEchoFromDevice();
+              setRemoving(false);
+              setRemoved(true);
+            }}
+          >
+            {removing ? "Removing…" : "Remove from this device"}
+          </button>
+        </>
+      ) : (
+        <p className="mt-3 text-[15px] text-muted">
+          {removed
+            ? "Removed. Echo will use demo replies until you download it again."
+            : `Not downloaded. Downloads are kept for ${MODEL_TTL_DAYS} days.`}
+        </p>
+      )}
     </div>
   );
 }

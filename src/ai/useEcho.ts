@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { ChatCompletionMessageParam } from "@mlc-ai/web-llm";
 import { CANDIDATE_MODELS, pickBuild } from "./models";
+import { isModelExpired, removeDownloadedModels } from "./modelCache";
 
 /**
  * App-wide status of Echo's on-device model, shared by every screen.
@@ -62,6 +63,8 @@ function checkOnce() {
         set({ phase: "unsupported", demo: true, reason: support.reason });
         return;
       }
+      // Downloaded more than 7 days ago: remove it so it doesn't keep taking up space.
+      if (isModelExpired()) await removeDownloadedModels().catch(() => {});
       // Only devices that can run the model download WebLLM.
       const e = await engine();
       modelId = pickBuild(DEFAULT_MODEL, support.shaderF16).id;
@@ -93,6 +96,18 @@ export async function loadEcho(): Promise<void> {
   } catch (err) {
     set({ phase: "error", demo: true, reason: err instanceof Error ? err.message : String(err) });
   }
+}
+
+/** Removes the model from this device right away (Profile → Echo on this device). */
+export async function removeEchoFromDevice(): Promise<void> {
+  try {
+    const e = await engine();
+    await e.unloadModel();
+  } catch {
+    // Nothing loaded.
+  }
+  await removeDownloadedModels();
+  set({ phase: status.phase === "unsupported" ? "unsupported" : "idle", cached: false, progress: 0 });
 }
 
 export function chooseDemoReplies(): void {

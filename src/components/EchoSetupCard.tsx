@@ -1,4 +1,5 @@
 import { ECHO_DOWNLOAD_MB, loadEcho, chooseDemoReplies, useEchoStatus } from "../ai/useEcho";
+import { MODEL_TTL_DAYS } from "../ai/modelCache";
 
 /**
  * Explains on-device AI and lets the person download the model or use demo replies.
@@ -34,7 +35,9 @@ export function EchoSetupCard({ compact = false }: { compact?: boolean }) {
           <div className="h-full rounded-full bg-echo transition-[width]" style={{ width: `${pct}%` }} />
         </div>
         <p className="mt-2 text-sm text-muted">
-          {ai.cached ? "Loading from your browser." : "This only happens once. You can keep using Echo while it downloads."}
+          {ai.cached
+            ? "Loading from this device."
+            : `Downloading once. It stays on this device for ${MODEL_TTL_DAYS} days. You can keep using Echo meanwhile.`}
         </p>
       </div>
     );
@@ -42,13 +45,19 @@ export function EchoSetupCard({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="card border-echo/20 bg-echo-soft/50 p-4">
-      <p className="font-semibold text-echo-strong">Run Echo on your device</p>
+      <p className="flex items-center gap-2 font-semibold text-echo-strong">
+        <ShieldIcon /> Private by design: Echo runs on your device
+      </p>
       {!compact && (
-        <p className="mt-1 text-sm text-ink/80">
-          Echo's AI runs in your browser, so what you tell it stays on this device. It's a one-time download of about{" "}
-          {ECHO_DOWNLOAD_MB} MB, best on Wi-Fi.
+        <p className="mt-1.5 text-sm text-ink/80">
+          Echo's AI runs right here in your browser, not on a server. What you tell Echo is processed on this device
+          and never sent anywhere.
         </p>
       )}
+      <p className="mt-1.5 text-[13px] text-muted">
+        One-time download, about {ECHO_DOWNLOAD_MB} MB. Best on Wi-Fi. It's removed automatically after {MODEL_TTL_DAYS}{" "}
+        days, or remove it anytime from your profile.
+      </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" className="btn-echo" onClick={() => void loadEcho()}>
           Download Echo
@@ -58,5 +67,14 @@ export function EchoSetupCard({ compact = false }: { compact?: boolean }) {
         </button>
       </div>
     </div>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="size-4.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <path d="M10 2.5 4 5v4.5c0 3.7 2.6 6.8 6 8 3.4-1.2 6-4.3 6-8V5z" strokeLinejoin="round" />
+      <path d="m7.5 10 1.8 1.8 3.4-3.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
