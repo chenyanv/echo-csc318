@@ -153,3 +153,12 @@ export const SAMPLE_USER: Profile = {
   prompts: [],
   avatar: ["#e5484d", "#f76b15"],
 };
+
+/** Empty profile for a brand-new participant. Setup fills it in. */
+export const BLANK_USER: Profile = {
+  ...SAMPLE_USER,
+  name: "",
+  pronouns: "",
+  interests: [],
+  values: [],
+};

@@ -41,3 +41,13 @@ describe("calendar export", () => {
     expect(ics.split("\r\n")[0]).toBe("BEGIN:VCALENDAR");
   });
 });
+
+import { cleanHandle } from "./instagram";
+
+describe("Instagram handles", () => {
+  it("accepts @name, profile links and stray spaces", () => {
+    expect(cleanHandle("  @alex.climbs ")).toBe("alex.climbs");
+    expect(cleanHandle("https://www.instagram.com/alex_c/")).toBe("alex_c");
+    expect(cleanHandle("bad handle!")).toBe("badhandle");
+  });
+});

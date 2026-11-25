@@ -1,4 +1,4 @@
-import { MATCHES, SAMPLE_USER } from "../data/profiles";
+import { BLANK_USER, MATCHES, SAMPLE_USER } from "../data/profiles";
 import { DEFAULT_PLAN } from "../data/planner";
 import { HUMAN_REPLIES } from "../data/scripts";
 import { initialState, makeId, newConnection } from "./reducer";
@@ -69,7 +69,7 @@ function withAlex(state: AppState, fn: (c: Connection) => Connection): AppState 
 export function buildPreset(key: PresetKey, now: number = Date.now()): AppState {
   switch (key) {
     case "fresh":
-      return initialState(SAMPLE_USER, DEFAULT_QUEUE);
+      return initialState(BLANK_USER, DEFAULT_QUEUE);
 
     case "t1":
       return onboarded(now);

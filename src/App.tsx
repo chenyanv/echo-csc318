@@ -1,25 +1,64 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import AppShell from "./components/AppShell";
+import OnboardingLayout from "./components/OnboardingLayout";
 import Home from "./pages/Home";
+import Today from "./pages/Today";
+import MatchProfile from "./pages/MatchProfile";
+import Chats from "./pages/Chats";
+import ChatPlaceholder from "./pages/ChatPlaceholder";
 import Placeholder from "./pages/Placeholder";
+import Profile from "./pages/Profile";
+import Welcome from "./pages/onboarding/Welcome";
+import Setup from "./pages/onboarding/Setup";
+import QuickChat from "./pages/onboarding/QuickChat";
+import { useStore } from "./state/store";
 
 // WebLLM is large, so the lab only loads when someone opens it.
 const ModelLab = lazy(() => import("./pages/ModelLab"));
 
+/** Sends people who haven't finished setup to the welcome screen. */
+function RequireOnboarded({ children }: { children: ReactNode }) {
+  const { state } = useStore();
+  return state.onboarded ? children : <Navigate to="/welcome" replace />;
+}
+
 export default function App() {
   return (
     <Routes>
-      <Route element={<AppShell />}>
+      <Route element={<OnboardingLayout />}>
+        <Route path="welcome" element={<Welcome />} />
+        <Route path="setup" element={<Setup />} />
+        <Route path="setup/chat" element={<QuickChat />} />
+      </Route>
+
+      <Route
+        element={
+          <RequireOnboarded>
+            <AppShell />
+          </RequireOnboarded>
+        }
+      >
         <Route index element={<Home />} />
+        <Route path="today" element={<Today />} />
+        <Route path="match/:id" element={<MatchProfile />} />
         <Route
-          path="today"
-          element={<Placeholder title="Today's match" body="Your daily match will show up here." />}
+          path="match/:id/plan"
+          element={<Placeholder title="Plan a date" body="The date planner arrives in M4." />}
         />
-        <Route path="chats" element={<Placeholder title="Chats" body="Conversations with your matches live here." />} />
-        <Route path="profile" element={<Placeholder title="Profile" body="Edit your preferences and what you share." />} />
+        <Route path="chats" element={<Chats />} />
+        <Route path="chats/:id" element={<ChatPlaceholder />} />
+        <Route path="profile" element={<Profile />} />
+      </Route>
+
+      <Route
+        path="lab"
+        element={
+          <AppShell />
+        }
+      >
         <Route
-          path="lab"
+          index
           element={
             <Suspense fallback={<p className="text-muted">Loading model lab…</p>}>
               <ModelLab />
@@ -27,6 +66,7 @@ export default function App() {
           }
         />
       </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

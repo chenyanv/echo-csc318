@@ -26,6 +26,8 @@ export type Action =
   | { type: "MATCH_PASS"; matchId: string; now: number }
   | { type: "MATCH_DECLINE"; matchId: string; now: number }
   | { type: "MATCH_UNDO"; matchId: string; now: number }
+  /** Bring back a passed match from "Recently passed". Passing never notifies anyone, so no time limit. */
+  | { type: "MATCH_RESTORE"; matchId: string }
   | { type: "SEND_MESSAGE"; matchId: string; text: string; now: number }
   | { type: "RECEIVE_HUMAN_REPLY"; matchId: string; now: number }
   | { type: "ADD_ECHO_MESSAGE"; matchId: string; sender: "myEcho" | "theirEcho"; text: string; demo?: boolean; now: number }
@@ -281,6 +283,11 @@ export function reducer(state: AppState, action: Action): AppState {
         if (d.kind === "declined" && isUndoable(d, action.now)) return { ...c, decision: { kind: "accepted", at: d.at } };
         return c;
       });
+
+    case "MATCH_RESTORE":
+      return updateConnection(state, action.matchId, (c) =>
+        c.decision.kind === "passed" ? { ...c, decision: { kind: "pending" } } : c,
+      );
 
     case "SEND_MESSAGE":
       return updateConnection(state, action.matchId, (c) => {

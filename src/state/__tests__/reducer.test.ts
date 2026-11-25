@@ -24,6 +24,11 @@ describe("daily match decisions", () => {
     expect(alex(undone).decision.kind).toBe("accepted");
   });
 
+  it("can bring back a passed match from Recently passed at any time", () => {
+    const s = run(buildPreset("t1", T), { type: "MATCH_PASS", matchId: "alex", now: T }, { type: "MATCH_RESTORE", matchId: "alex" });
+    expect(alex(s).decision.kind).toBe("pending");
+  });
+
   it("offers one match per day, in queue order", () => {
     const s = buildPreset("t1", T);
     expect(todayMatchId(s)).toBe("alex");

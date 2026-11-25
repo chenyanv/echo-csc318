@@ -5,6 +5,15 @@ import { STATE_VERSION, type AppState } from "./types";
 
 const STORAGE_KEY = "echo.state";
 
+/** Clears saved progress (used by Reset). */
+export function clearSavedState() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function load(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
