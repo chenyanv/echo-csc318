@@ -137,6 +137,8 @@ export function validateQuestion(raw: string, speakerFor: Profile, other: Profil
   const words = q.split(/\s+/).length;
   if (words < 3 || words > 18) return null;
   if (/\b(I|I'm|I've|me|my|mine|we|our)\b/.test(q)) return null;
+  // Never guess anyone's pronouns: use names instead.
+  if (/\b(he|she|they|him|her|them|his|hers|their|theirs|himself|herself|themself|themselves)\b/i.test(q)) return null;
   // "you" is ambiguous when the other side might be an Echo, so the question must name the person.
   if (!direct) {
     if (/\b(you|your|you're|yours)\b/i.test(q)) return null;

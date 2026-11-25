@@ -85,6 +85,9 @@ describe("validating the model's question", () => {
     expect(validateQuestion("Sam really likes hiking.", sam, alex)).toBeNull();
     expect(validateQuestion("Why?", sam, alex)).toBeNull();
     expect(validateQuestion("Are you a thrill-seeker?", sam, alex)).toBeNull();
+    // Seen on the live site: the model guessed a pronoun.
+    expect(validateQuestion("How does Alex get their coffee fix?", sam, alex)).toBeNull();
+    expect(validateQuestion("What does Alex like about his job?", sam, alex)).toBeNull();
     expect(validateQuestion("What's the best café near campus?", sam, alex)).toBeNull();
   });
 });
