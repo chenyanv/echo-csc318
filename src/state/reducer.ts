@@ -41,6 +41,8 @@ export type Action =
   | { type: "PLAN_THEIR_RESPONSE"; matchId: string; response: "accept" | "reschedule" | "decline"; now: number }
   | { type: "PLAN_ACCEPT_COUNTER"; matchId: string; now: number }
   | { type: "PLAN_CANCEL"; matchId: string; now: number }
+  /** Reopen a sent, counter-offered or confirmed plan for editing. It stops being confirmed. */
+  | { type: "PLAN_REVISE"; matchId: string; now: number }
   | { type: "SHARE_IG"; matchId: string; who: Side; now: number }
   | { type: "SAVE_REFLECTION"; matchId: string; feeling?: Feeling; note: string; now: number };
 
@@ -218,6 +220,25 @@ function planReducer(c: Connection, action: Action, name: string): Connection {
       };
       return addSystem({ ...c, plan: next }, "You accepted the new time. Your date is confirmed.", action.now);
     }
+    case "PLAN_REVISE": {
+      const p = c.plan;
+      if (!p || (p.status !== "sent" && p.status !== "counter" && p.status !== "confirmed")) return c;
+      const { counter, ...rest } = p;
+      // Start from their suggestion if there was one, so a small tweak is easy.
+      const draft: DatePlan = {
+        ...rest,
+        ...(counter?.time ? { time: counter.time } : {}),
+        ...(counter?.date ? { date: counter.date } : {}),
+        ...(counter?.place ? { place: counter.place } : {}),
+        status: "draft",
+        updatedAt: action.now,
+      };
+      const line =
+        p.status === "confirmed"
+          ? `You're changing your date. It isn't confirmed again until ${name} accepts the new invite.`
+          : `You're editing the invite. ${name} will see the new version once you send it.`;
+      return addSystem({ ...c, plan: draft }, line, action.now);
+    }
     case "PLAN_CANCEL": {
       if (!c.plan || c.plan.status === "cancelled" || c.plan.status === "draft") return c;
       return addSystem(
@@ -332,6 +353,7 @@ export function reducer(state: AppState, action: Action): AppState {
     case "PLAN_THEIR_RESPONSE":
     case "PLAN_ACCEPT_COUNTER":
     case "PLAN_CANCEL":
+    case "PLAN_REVISE":
       return updateConnection(state, action.matchId, (c) => planReducer(c, action, getMatch(c.matchId).name));
 
     case "SHARE_IG":

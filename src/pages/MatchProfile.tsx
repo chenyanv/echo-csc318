@@ -8,6 +8,7 @@ import { MATCHES, type Profile } from "../data/profiles";
 import { cleanHandle } from "../lib/instagram";
 import { isMatchNotified, isUndoable } from "../state/reducer";
 import { useNow, useStore } from "../state/store";
+import { formatDate, formatTime, isPast } from "../lib/format";
 
 export default function MatchProfile() {
   const { id = "" } = useParams();
@@ -55,15 +56,23 @@ export default function MatchProfile() {
       </div>
 
       {plan && plan.status !== "draft" && plan.status !== "cancelled" && (
-        <p className="card mt-5 p-4 text-[15px]">
-          {plan.status === "confirmed"
-            ? "You have a date planned."
-            : plan.status === "sent"
-              ? `Date invite sent. Waiting for ${match.name}.`
-              : plan.status === "counter"
-                ? `${match.name} suggested a different time.`
-                : `${match.name} would rather keep chatting for now.`}
-        </p>
+        <Link to={`/match/${match.id}/plan`} className="card mt-5 flex items-center gap-3 p-4 hover:shadow-sm">
+          <span
+            className={`size-2.5 shrink-0 rounded-full ${
+              plan.status === "confirmed" ? "bg-ok" : plan.status === "declined" ? "bg-muted" : "bg-warn"
+            }`}
+          />
+          <span className="flex-1 text-[15px]">
+            {plan.status === "confirmed"
+              ? `${isPast(plan.date) ? "Your date was" : "Date confirmed:"} ${formatDate(plan.date)} at ${formatTime(plan.time)}`
+              : plan.status === "sent"
+                ? `Date invite sent. Waiting for ${match.name}.`
+                : plan.status === "counter"
+                  ? `${match.name} suggested a different time.`
+                  : `${match.name} would rather keep chatting for now.`}
+          </span>
+          <span className="text-sm font-medium text-muted">View</span>
+        </Link>
       )}
 
       <div className="mt-5 grid grid-cols-2 gap-3">

@@ -7,6 +7,7 @@ import Today from "./pages/Today";
 import MatchProfile from "./pages/MatchProfile";
 import Chats from "./pages/Chats";
 import Chat from "./pages/Chat";
+import DatePlanner from "./pages/DatePlanner";
 import Placeholder from "./pages/Placeholder";
 import Profile from "./pages/Profile";
 import Welcome from "./pages/onboarding/Welcome";
@@ -42,9 +43,10 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="today" element={<Today />} />
         <Route path="match/:id" element={<MatchProfile />} />
+        <Route path="match/:id/plan" element={<DatePlanner />} />
         <Route
-          path="match/:id/plan"
-          element={<Placeholder title="Plan a date" body="The date planner arrives in M4." />}
+          path="match/:id/reflect"
+          element={<Placeholder title="How did it go?" body="The after-date reflection arrives in M5." />}
         />
         <Route path="chats" element={<Chats />} />
         <Route path="chats/:id" element={<Chat />} />

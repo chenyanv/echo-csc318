@@ -112,6 +112,28 @@ describe("date planning", () => {
     expect(alex(s).plan).toMatchObject({ status: "confirmed", time: "17:00" });
   });
 
+  it("revising a confirmed date makes it unconfirmed until they accept again", () => {
+    let s = run(
+      draft(buildPreset("t3", T)),
+      { type: "PLAN_SEND", matchId: "alex", now: T },
+      { type: "PLAN_THEIR_RESPONSE", matchId: "alex", response: "accept", now: T },
+      { type: "PLAN_REVISE", matchId: "alex", now: T },
+    );
+    expect(alex(s).plan?.status).toBe("draft");
+    s = run(s, { type: "PLAN_UPDATE", matchId: "alex", patch: { time: "11:00" }, now: T }, { type: "PLAN_SEND", matchId: "alex", now: T });
+    expect(alex(s).plan).toMatchObject({ status: "sent", time: "11:00" });
+  });
+
+  it("revising a counter-offer starts from their suggested time", () => {
+    const s = run(
+      draft(buildPreset("t3", T)),
+      { type: "PLAN_SEND", matchId: "alex", now: T },
+      { type: "PLAN_THEIR_RESPONSE", matchId: "alex", response: "reschedule", now: T },
+      { type: "PLAN_REVISE", matchId: "alex", now: T },
+    );
+    expect(alex(s).plan).toMatchObject({ status: "draft", time: "17:00" });
+  });
+
   it("can't edit a plan once it's been sent", () => {
     const sent = run(draft(buildPreset("t3", T)), { type: "PLAN_SEND", matchId: "alex", now: T });
     const s = run(sent, { type: "PLAN_UPDATE", matchId: "alex", patch: { time: "11:00" }, now: T });

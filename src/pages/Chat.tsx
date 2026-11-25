@@ -16,8 +16,6 @@ import type { Connection } from "../state/types";
 /** Pause between turns so people can read along. */
 const ECHO_DELAY_MS = 1500;
 const HUMAN_REPLY_DELAY_MS = 2200;
-/** Scripted: the match agrees to Echo chat a moment after you ask (the facilitator can change this later). */
-const THEY_ACCEPT_ECHO_MS = 3000;
 
 export default function Chat() {
   const { id = "" } = useParams();
@@ -107,16 +105,7 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
     };
   }, [theirTurn, lastSpoken?.id, dispatch, match.id]);
 
-  // Scripted: the match agrees when you invite them to Echo chat.
   const waitingForThem = conn.echo.kind === "invited" && conn.echo.by === "me";
-  useEffect(() => {
-    if (!waitingForThem) return;
-    const timer = window.setTimeout(
-      () => dispatch({ type: "ECHO_RESPOND", matchId: match.id, by: "them", accept: true, now: Date.now() }),
-      THEY_ACCEPT_ECHO_MS,
-    );
-    return () => window.clearTimeout(timer);
-  }, [waitingForThem, dispatch, match.id]);
 
   function send(e: React.FormEvent) {
     e.preventDefault();
