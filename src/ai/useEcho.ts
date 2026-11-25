@@ -55,13 +55,15 @@ let checked = false;
 function checkOnce() {
   if (checked) return;
   checked = true;
-  engine()
-    .then(async (e) => {
-      const support = await e.checkDeviceSupport();
+  import("./device")
+    .then((d) => d.checkDeviceSupport())
+    .then(async (support) => {
       if (!support.webgpu) {
         set({ phase: "unsupported", demo: true, reason: support.reason });
         return;
       }
+      // Only devices that can run the model download WebLLM.
+      const e = await engine();
       modelId = pickBuild(DEFAULT_MODEL, support.shaderF16).id;
       const cached = await e.isModelCached(modelId).catch(() => false);
       set({ phase: "idle", cached });
