@@ -1,6 +1,8 @@
 # Echo — high-fidelity prototype (CSC318 A3)
 
 AI-assisted dating for UTSG students, from first interest to a first date, with people in control of the pace.
+**Live:** https://echo-csc318.vercel.app · Facilitator panel: https://echo-csc318.vercel.app/facilitator
+
 All profiles and match replies are fictional. See [PLAN.md](PLAN.md) for the design decisions behind it.
 
 ## Run it locally
