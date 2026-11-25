@@ -75,6 +75,21 @@ export default function MatchProfile() {
         </Link>
       )}
 
+      {plan?.status === "confirmed" && isPast(plan.date) && (
+        <Link
+          to={`/match/${match.id}/reflect`}
+          className="card mt-3 flex items-center justify-between gap-3 border-accent/30 bg-accent-soft/60 p-4 hover:shadow-sm"
+        >
+          <span>
+            <span className="block font-semibold">How did it go?</span>
+            <span className="block text-sm text-muted">
+              {conn.reflection.savedAt ? "You saved a private reflection. Open to edit it." : "Take a moment to reflect. It stays private."}
+            </span>
+          </span>
+          <span className="btn-primary min-h-9 shrink-0 px-4 text-sm">{conn.reflection.savedAt ? "Edit" : "Reflect"}</span>
+        </Link>
+      )}
+
       <div className="mt-5 grid grid-cols-2 gap-3">
         <Link to={`/chats/${match.id}`} className="btn-primary">
           Chat

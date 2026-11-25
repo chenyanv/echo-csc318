@@ -8,7 +8,8 @@ import MatchProfile from "./pages/MatchProfile";
 import Chats from "./pages/Chats";
 import Chat from "./pages/Chat";
 import DatePlanner from "./pages/DatePlanner";
-import Placeholder from "./pages/Placeholder";
+import Reflection from "./pages/Reflection";
+import Facilitator from "./pages/Facilitator";
 import Profile from "./pages/Profile";
 import Welcome from "./pages/onboarding/Welcome";
 import Setup from "./pages/onboarding/Setup";
@@ -44,10 +45,7 @@ export default function App() {
         <Route path="today" element={<Today />} />
         <Route path="match/:id" element={<MatchProfile />} />
         <Route path="match/:id/plan" element={<DatePlanner />} />
-        <Route
-          path="match/:id/reflect"
-          element={<Placeholder title="How did it go?" body="The after-date reflection arrives in M5." />}
-        />
+        <Route path="match/:id/reflect" element={<Reflection />} />
         <Route path="chats" element={<Chats />} />
         <Route path="chats/:id" element={<Chat />} />
         <Route path="profile" element={<Profile />} />
@@ -68,6 +66,8 @@ export default function App() {
           }
         />
       </Route>
+
+      <Route path="facilitator" element={<Facilitator />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

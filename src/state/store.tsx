@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useReducer, useState, type Dispatch, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useReducer, useState, type Dispatch, type ReactNode } from "react";
 import { reducer, type Action } from "./reducer";
+import { logAction } from "./sessionLog";
 import { buildPreset, type PresetKey } from "./presets";
 import { STATE_VERSION, type AppState } from "./types";
 
@@ -37,7 +38,11 @@ interface Store {
 const StoreContext = createContext<Store | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, load);
+  const [state, rawDispatch] = useReducer(reducer, undefined, load);
+  const dispatch = useCallback((a: Action) => {
+    logAction(a);
+    rawDispatch(a);
+  }, []);
 
   useEffect(() => {
     try {

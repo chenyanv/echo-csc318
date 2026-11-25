@@ -39,6 +39,9 @@ export default function Profile() {
         <p className="font-semibold">For researchers</p>
         <p className="mt-1 text-sm text-muted">Tools for running study sessions.</p>
         <div className="mt-3 flex flex-wrap gap-2">
+          <Link to="/facilitator" className="btn-secondary">
+            Facilitator panel
+          </Link>
           <Link to="/lab" className="btn-secondary">
             AI model lab
           </Link>
