@@ -40,24 +40,3 @@ export const QUICK_CHAT_FALLBACK = [
   "Got it. Last one: how do you usually text, short and quick or long messages?",
   "Thanks! That's all I need for now. You can change anything later in your profile.",
 ];
-
-/**
- * Fallback Echo-to-Echo conversation when AI can't run. Alternates: theirs, mine.
- * `{me}` is replaced with the participant's name. No pronouns for the participant: we don't know them.
- */
-export const ECHO_CHAT_FALLBACK: Record<string, { theirs: string; mine: string }[]> = {
-  alex: [
-    {
-      theirs: "hi! alex's echo here. what does your person like to do on weekends?",
-      mine: "{me} is usually out hiking if the weather's good, or cooking something new. What about Alex?",
-    },
-    {
-      theirs: "climbing gym most saturdays, then coffee. alex is big on finding new cafés",
-      mine: "{me} would like that. {me} has a whole list of coffee spots to try. Any favourite kind of movie?",
-    },
-    {
-      theirs: "indie stuff mostly. alex likes the weird ones that nobody's heard of",
-      mine: "Same with {me}. Sounds like {me} and Alex could swap recommendations.",
-    },
-  ],
-};

@@ -115,11 +115,12 @@ export async function generate(
   messages: ChatCompletionMessageParam[],
   onDelta?: (textSoFar: string) => void,
   maxTokens = 80,
+  temperature = 0.7,
 ): Promise<string | null> {
   if (!canUseModel()) return null;
   try {
     const e = await engine();
-    const { text } = await e.streamReply(messages, onDelta ?? (() => {}), { maxTokens, temperature: 0.7 });
+    const { text } = await e.streamReply(messages, onDelta ?? (() => {}), { maxTokens, temperature });
     return tidy(text);
   } catch {
     return null;

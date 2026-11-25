@@ -6,7 +6,7 @@ import Home from "./pages/Home";
 import Today from "./pages/Today";
 import MatchProfile from "./pages/MatchProfile";
 import Chats from "./pages/Chats";
-import ChatPlaceholder from "./pages/ChatPlaceholder";
+import Chat from "./pages/Chat";
 import Placeholder from "./pages/Placeholder";
 import Profile from "./pages/Profile";
 import Welcome from "./pages/onboarding/Welcome";
@@ -47,7 +47,7 @@ export default function App() {
           element={<Placeholder title="Plan a date" body="The date planner arrives in M4." />}
         />
         <Route path="chats" element={<Chats />} />
-        <Route path="chats/:id" element={<ChatPlaceholder />} />
+        <Route path="chats/:id" element={<Chat />} />
         <Route path="profile" element={<Profile />} />
       </Route>
 
