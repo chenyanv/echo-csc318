@@ -149,3 +149,30 @@ export function validateQuestion(raw: string, speakerFor: Profile, other: Profil
   if (new RegExp(`\\b${speakerFor.name}\\b`, "i").test(q)) return null;
   return q.charAt(0).toUpperCase() + q.slice(1);
 }
+
+/**
+ * "Help me reply" in a direct chat: Echo drafts, the person edits and sends it themself.
+ * Same rule as Echo turns: nothing about anyone is invented. The draft only mentions an
+ * interest the two really share (from both profiles) and asks the match a question.
+ */
+/** `mySidePast`: what you and your Echo have already said in this chat. */
+export function draftReply(me: Profile, match: Profile, mySidePast: string[]): { opening: string; topic: string; question: string } {
+  const said = mySidePast.join(" ").toLowerCase();
+  const shared = match.interests.find((i) => me.interests.includes(i) && !said.includes(i.toLowerCase()));
+  if (shared) {
+    return {
+      opening: `I saw you're into ${lower(shared)} too!`,
+      topic: `${me.name} and ${match.name} are both into ${lower(shared)}.`,
+      question: `How did you get into ${lower(shared)}?`,
+    };
+  }
+  const facts = echoFacts(match);
+  const f = facts[mySidePast.length % facts.length];
+  const question: Record<FactKind, string> = {
+    interest: `How did you get into ${lower(f.value)}?`,
+    goal: "What are you hoping to find on here?",
+    value: "What matters most to you in a relationship?",
+    pace: "How do you feel about meeting up?",
+  };
+  return { opening: "", topic: f.statement, question: question[f.kind] };
+}

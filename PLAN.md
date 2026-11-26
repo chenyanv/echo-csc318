@@ -60,8 +60,10 @@ Vercel 的 serverless 函数没有 GPU，函数体积和运行时间也有限制
 
 ## 3. 已定的设计决定
 
-1. **默认人和人直接聊**，状态头显示 `You: Human | Alex: Human`。
-2. **AI 代聊需要双方都同意。**一方发起邀请 → 等对方同意 → 变成 `You: Echo | Alex: Echo`。任何一方都能点 **Join as yourself** 接管，聊天里插入一行 "You joined. Your Echo is paused."。
+1. **默认人和人直接聊**，状态栏显示 `Direct chat · Every message is typed by you or Alex`。
+2. **AI 代聊需要双方都同意。**一方发起邀请 → 等对方同意 → 状态栏变成 `Echo chat (AI) · Your Echo and Alex's Echo are talking`。
+   **整个聊天同一时间只有一种模式：要么两个 Echo，要么两个人，不会出现人和 Echo 对话。**（2026-11-25 定，回答 PPT 第 12 页反馈问题 1；依据 A2 Finding 1 和 A1 里 16/20 担心被 AI 错误代表。）任何一方点 **Join as yourself**（或直接打字），Echo chat 对双方都结束，插入一行 "You joined, so Echo chat is off for both of you…"。想再用 Echo chat 要重新邀请、双方再同意。
+2b. **Help me reply**（直接聊天里）：Echo 把草稿放进输入框，用户改完自己点发送，消息算用户自己的，不加标签。草稿只提双方资料里真的共同的兴趣，再加一个问题；不编造任何事。会话日志记一笔 "started from Echo draft"（不存文字）。
 3. **每条消息都带发言者标签**（You / Alex / Your Echo / Alex's Echo），AI 消息用不同的气泡样式。
 4. **Decline 和 Not for me 之后有 10 秒撤销**，显示「已拒绝 · 撤销（10 秒）」，过了 10 秒才通知对方。Not for me 另外进入 **Recently passed** 列表。
 5. **今日唯一匹配要提前说清楚**：匹配卡上直接写「这是今天唯一的匹配」。
@@ -95,9 +97,9 @@ human_both ──(我邀请 Echo)──▶ invite_pending_them ──(对方同�
      ▲     ──(对方邀请 Echo)─▶ invite_pending_me  ──(我同意)────▶ echo_both
      │                                     (我拒绝) ─▶ human_both
      │
-     └──(任一方 Join as yourself)── echo_both
-         接管后：接管的那一方显示 Human，另一方的 Echo 继续说话；
-         对方也接管后，回到 human_both
+     └──(任一方 Join as yourself 或打字)── echo_both
+         任一方加入就对双方都关掉 Echo chat，回到 human_both。
+         不存在"一方是人、另一方是 Echo"的状态。
 ```
 
 每次状态变化都在聊天里插入一行系统提示，状态头同步更新。

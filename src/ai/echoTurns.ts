@@ -10,19 +10,12 @@ function spoken(c: Connection): ChatMessage[] {
 }
 
 /**
- * Decides which Echo (if any) should speak next.
- * - Both Echoes active: they take turns, starting with the match's Echo.
- * - Only the match's Echo active (you joined): it replies when you've said something.
- * - Only your Echo active (the match joined): it replies when the match has said something.
+ * Decides which Echo speaks next. Echoes only ever talk to each other: they take turns,
+ * starting with the match's Echo, and stop as soon as either person joins.
  */
 export function nextEchoSpeaker(c: Connection): EchoSpeaker | null {
   if (c.echo.kind !== "on") return null;
-  const last = spoken(c).at(-1)?.sender;
-  const { myEchoActive, theirEchoActive } = c.echo;
-  if (myEchoActive && theirEchoActive) return last === "theirEcho" ? "myEcho" : "theirEcho";
-  if (theirEchoActive && last === "me") return "theirEcho";
-  if (myEchoActive && last === "them") return "myEcho";
-  return null;
+  return spoken(c).at(-1)?.sender === "theirEcho" ? "myEcho" : "theirEcho";
 }
 
 /** Echo messages since the last thing a person typed (or since Echo chat started). */

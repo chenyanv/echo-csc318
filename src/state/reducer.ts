@@ -28,13 +28,13 @@ export type Action =
   | { type: "MATCH_UNDO"; matchId: string; now: number }
   /** Bring back a passed match from "Recently passed". Passing never notifies anyone, so no time limit. */
   | { type: "MATCH_RESTORE"; matchId: string }
-  | { type: "SEND_MESSAGE"; matchId: string; text: string; now: number }
+  /** `assisted`: the text started as an Echo draft ("Help me reply"). Only logged; the message is still yours. */
+  | { type: "SEND_MESSAGE"; matchId: string; text: string; now: number; assisted?: boolean }
   | { type: "RECEIVE_HUMAN_REPLY"; matchId: string; now: number }
   | { type: "ADD_ECHO_MESSAGE"; matchId: string; sender: "myEcho" | "theirEcho"; text: string; demo?: boolean; now: number }
   | { type: "ECHO_INVITE"; matchId: string; by: Side; now: number }
   | { type: "ECHO_RESPOND"; matchId: string; by: Side; accept: boolean; now: number }
   | { type: "ECHO_TAKEOVER"; matchId: string; who: Side; now: number }
-  | { type: "ECHO_RESUME"; matchId: string; who: Side; now: number }
   | { type: "ECHO_TURN_OFF"; matchId: string; who: Side; now: number }
   | { type: "PLAN_UPDATE"; matchId: string; patch: Partial<Pick<DatePlan, "activityId" | "place" | "date" | "time">>; now: number }
   | { type: "PLAN_SEND"; matchId: string; now: number }
@@ -92,10 +92,9 @@ export function todayMatchId(state: AppState): string {
   return state.matchQueue[state.day % state.matchQueue.length];
 }
 
-/** Labels for the chat header, e.g. "You: Human | Alex: Echo". */
-export function speakerModes(echo: EchoStatus): { me: "Human" | "Echo"; them: "Human" | "Echo" } {
-  if (echo.kind !== "on") return { me: "Human", them: "Human" };
-  return { me: echo.myEchoActive ? "Echo" : "Human", them: echo.theirEchoActive ? "Echo" : "Human" };
+/** The chat's one shared mode: two Echoes talking, or two people. */
+export function chatMode(echo: EchoStatus): "echo" | "direct" {
+  return echo.kind === "on" ? "echo" : "direct";
 }
 
 function echoReducer(c: Connection, action: Action, name: string): Connection {
@@ -117,37 +116,19 @@ function echoReducer(c: Connection, action: Action, name: string): Connection {
         return addSystem({ ...c, echo: { kind: "off" } }, line, now);
       }
       return addSystem(
-        { ...c, echo: { kind: "on", myEchoActive: true, theirEchoActive: true } },
-        `Echo chat is on. Your Echo and ${name}'s Echo are chatting. Either of you can join at any time.`,
+        { ...c, echo: { kind: "on" } },
+        `Echo chat is on. Your Echo and ${name}'s Echo are chatting. Either of you can join at any time, and then it's just the two of you.`,
         now,
       );
     }
     case "ECHO_TAKEOVER": {
+      // Either person joining ends Echo chat for both, so nobody is left talking to an Echo.
       if (c.echo.kind !== "on") return c;
-      const active = action.who === "me" ? c.echo.myEchoActive : c.echo.theirEchoActive;
-      if (!active) return c;
-      const echo = {
-        ...c.echo,
-        ...(action.who === "me" ? { myEchoActive: false } : { theirEchoActive: false }),
-      };
-      const line = action.who === "me" ? "You joined. Your Echo is paused." : `${name} joined. ${name}'s Echo is paused.`;
-      let next = addSystem({ ...c, echo }, line, now);
-      if (!echo.myEchoActive && !echo.theirEchoActive) {
-        next = addSystem({ ...next, echo: { kind: "off" } }, "Echo chat is off. You're both typing as yourselves.", now);
-      }
-      return next;
-    }
-    case "ECHO_RESUME": {
-      if (c.echo.kind !== "on") return c;
-      const active = action.who === "me" ? c.echo.myEchoActive : c.echo.theirEchoActive;
-      if (active) return c;
-      const echo = {
-        ...c.echo,
-        ...(action.who === "me" ? { myEchoActive: true } : { theirEchoActive: true }),
-      };
       const line =
-        action.who === "me" ? "You handed the chat back to your Echo." : `${name} handed the chat back to ${name}'s Echo.`;
-      return addSystem({ ...c, echo }, line, now);
+        action.who === "me"
+          ? `You joined, so Echo chat is off for both of you. From here, every message is typed by you or ${name}.`
+          : `${name} joined, so Echo chat is off for both of you. From here, every message is typed by you or ${name}.`;
+      return addSystem({ ...c, echo: { kind: "off" } }, line, now);
     }
     case "ECHO_TURN_OFF": {
       if (c.echo.kind === "off") return c;
@@ -314,9 +295,9 @@ export function reducer(state: AppState, action: Action): AppState {
       return updateConnection(state, action.matchId, (c) => {
         const text = action.text.trim();
         if (!text) return c;
-        // Typing yourself while your Echo is active counts as joining.
+        // Typing yourself during Echo chat counts as joining.
         const joined =
-          c.echo.kind === "on" && c.echo.myEchoActive
+          c.echo.kind === "on"
             ? echoReducer(c, { type: "ECHO_TAKEOVER", matchId: action.matchId, who: "me", now: action.now }, getMatch(c.matchId).name)
             : c;
         return { ...joined, messages: [...joined.messages, msg("me", text, action.now)] };
@@ -336,15 +317,12 @@ export function reducer(state: AppState, action: Action): AppState {
     case "ADD_ECHO_MESSAGE":
       return updateConnection(state, action.matchId, (c) => {
         if (c.echo.kind !== "on") return c;
-        const active = action.sender === "myEcho" ? c.echo.myEchoActive : c.echo.theirEchoActive;
-        if (!active) return c;
         return { ...c, messages: [...c.messages, msg(action.sender, action.text, action.now, action.demo)] };
       });
 
     case "ECHO_INVITE":
     case "ECHO_RESPOND":
     case "ECHO_TAKEOVER":
-    case "ECHO_RESUME":
     case "ECHO_TURN_OFF":
       return updateConnection(state, action.matchId, (c) => echoReducer(c, action, getMatch(c.matchId).name));
 

@@ -1,7 +1,7 @@
 import type { Profile } from "../data/profiles";
 
 /** Bump when the shape changes so stale localStorage is discarded. */
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 /** Undo window for "Not for me" and "Decline" (A2 finding 2). */
 export const UNDO_MS = 10_000;
@@ -11,7 +11,7 @@ export type Sender =
   | "them" // the match, typing as themselves (always scripted, never AI)
   | "myEcho" // the participant's Echo
   | "theirEcho" // the match's Echo
-  | "system"; // status lines like "You joined. Your Echo is paused."
+  | "system"; // status lines like "You joined, so Echo chat is now off."
 
 export interface ChatMessage {
   id: string;
@@ -23,15 +23,17 @@ export interface ChatMessage {
 }
 
 /**
- * Echo chat only runs when both people agree (team decision, 2026-11-25).
- * - off: both people type as themselves (the default)
- * - invited: one side asked to turn Echo on and is waiting for the other
- * - on: both agreed; each side's Echo speaks until that person takes over
+ * The whole chat is in one mode at a time, shared by both people (team decision, 2026-11-25):
+ * either two Echoes are talking, or two people are. A person never talks to an Echo that is
+ * speaking for someone who isn't there (A2 finding 1; A1 misrepresentation concerns).
+ * - off: direct chat, both people type as themselves (the default)
+ * - invited: one side asked to turn Echo chat on and is waiting for the other
+ * - on: both agreed; the two Echoes chat until either person joins, which ends it for both
  */
 export type EchoStatus =
   | { kind: "off" }
   | { kind: "invited"; by: "me" | "them" }
-  | { kind: "on"; myEchoActive: boolean; theirEchoActive: boolean };
+  | { kind: "on" };
 
 export type MatchDecision =
   | { kind: "pending" } // match shown, no decision yet

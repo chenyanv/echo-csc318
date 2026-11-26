@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { echoTurnsSinceHuman, nextEchoSpeaker } from "./echoTurns";
-import { bankQuestion, echoFacts, nextFact, validateQuestion } from "./echoCompose";
+import { bankQuestion, draftReply, echoFacts, nextFact, validateQuestion } from "./echoCompose";
 import { reducer } from "../state/reducer";
 import { buildPreset } from "../state/presets";
 import { getMatch, SAMPLE_USER } from "../data/profiles";
@@ -24,12 +24,31 @@ describe("Echo turn taking", () => {
     expect(echoTurnsSinceHuman(after)).toBe(1);
   });
 
-  it("after you join, the match's Echo only replies to you", () => {
+  it("stops for good once either person joins", () => {
     let s = reducer(buildPreset("t4", T), { type: "ECHO_RESPOND", matchId: "alex", by: "me", accept: true, now: T });
     s = reducer(s, { type: "ECHO_TAKEOVER", matchId: "alex", who: "me", now: T });
     expect(nextEchoSpeaker(s.connections.alex)).toBeNull();
     s = reducer(s, { type: "SEND_MESSAGE", matchId: "alex", text: "hey!", now: T });
-    expect(nextEchoSpeaker(s.connections.alex)).toBe("theirEcho");
+    expect(nextEchoSpeaker(s.connections.alex)).toBeNull();
+  });
+});
+
+describe("Help me reply", () => {
+  it("only mentions an interest you really share, then asks a question", () => {
+    const shared = alex.interests.find((i) => sam.interests.includes(i));
+    const d = draftReply(sam, alex, []);
+    if (shared) {
+      expect(d.opening).toBe(`I saw you're into ${shared.toLowerCase()} too!`);
+    } else {
+      expect(d.opening).toBe("");
+    }
+    expect(d.question).toMatch(/\?$/);
+  });
+
+  it("doesn't repeat a shared interest you already brought up", () => {
+    const shared = alex.interests.find((i) => sam.interests.includes(i));
+    if (!shared) return;
+    expect(draftReply(sam, alex, [`I love ${shared} too`]).opening).not.toContain(shared.toLowerCase());
   });
 });
 

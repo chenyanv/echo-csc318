@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { generate, useEchoStatus } from "../ai/useEcho";
-import { acknowledgement, bankQuestion, nextFact, questionPrompt, validateQuestion } from "../ai/echoCompose";
+import { acknowledgement, bankQuestion, draftReply, nextFact, questionPrompt, validateQuestion } from "../ai/echoCompose";
 import { ECHO_TURNS_PER_ROUND, echoTurnsSinceHuman, nextEchoSpeaker, type EchoSpeaker } from "../ai/echoTurns";
 import { MessageBubble, TypingDots } from "../components/chat/MessageBubble";
 import { Avatar } from "../components/ui/Avatar";
@@ -9,7 +9,6 @@ import { BackButton } from "../components/ui/PageHeader";
 import { Sheet } from "../components/ui/Sheet";
 import { MATCHES, type Profile } from "../data/profiles";
 import { HUMAN_REPLIES } from "../data/scripts";
-import { speakerModes } from "../state/reducer";
 import { useStore } from "../state/store";
 import type { Connection } from "../state/types";
 
@@ -32,6 +31,9 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   const { state, dispatch } = useStore();
   const ai = useEchoStatus();
   const [draft, setDraft] = useState("");
+  /** Set while the composer holds text Echo drafted ("Help me reply"). */
+  const [assisted, setAssisted] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [pendingEcho, setPendingEcho] = useState<{ speaker: EchoSpeaker; text: string } | null>(null);
   const [themTyping, setThemTyping] = useState(false);
   const [extraRounds, setExtraRounds] = useState(0);
@@ -41,24 +43,21 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   const busy = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const modes = speakerModes(conn.echo);
   const echoOn = conn.echo.kind === "on";
-  const myEchoSpeaking = conn.echo.kind === "on" && conn.echo.myEchoActive;
-  const bothEchoes = conn.echo.kind === "on" && conn.echo.myEchoActive && conn.echo.theirEchoActive;
   const roundLimit = ECHO_TURNS_PER_ROUND * (extraRounds + 1);
-  const pausedForCatchUp = bothEchoes && echoTurnsSinceHuman(conn) >= roundLimit;
+  const pausedForCatchUp = echoOn && echoTurnsSinceHuman(conn) >= roundLimit;
   const lastSpoken = conn.messages.filter((m) => m.sender !== "system").at(-1);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [conn.messages.length, pendingEcho?.text, themTyping]);
 
-  // Reset the catch-up pause whenever Echo chat restarts or someone types.
+  // Reset the catch-up pause whenever Echo chat ends.
   useEffect(() => {
-    if (!bothEchoes) setExtraRounds(0);
-  }, [bothEchoes]);
+    if (!echoOn) setExtraRounds(0);
+  }, [echoOn]);
 
-  // Echo-to-Echo (and Echo-to-you) turns.
+  // Echo-to-Echo turns (only while Echo chat is on; Echoes never talk to a person).
   useEffect(() => {
     const speaker = nextEchoSpeaker(conn);
     if (!speaker || busy.current || pausedForCatchUp) return;
@@ -73,11 +72,9 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
       const fact = nextFact(self, turn, lastFromOther, ownPast);
       const statement = acknowledgement(turn, Boolean(lastFromOther), speaker === "myEcho" ? 1 : 0) + fact.statement;
       setPendingEcho({ speaker, text: statement });
-      // Alex's Echo talking to you after you joined: address you directly.
-      const direct = speaker === "theirEcho" && conn.echo.kind === "on" && !conn.echo.myEchoActive;
       // Not streamed: the question is only shown after it passes validation.
-      const raw = await generate(questionPrompt(self, other, fact.statement, lastFromOther, direct), undefined, 40, 0.5);
-      const question = (raw && validateQuestion(raw, self, other, direct)) || bankQuestion(fact, other, turn, direct);
+      const raw = await generate(questionPrompt(self, other, fact.statement, lastFromOther), undefined, 40, 0.5);
+      const question = (raw && validateQuestion(raw, self, other)) || bankQuestion(fact, other, turn);
       const text = `${statement} ${question}`;
       setPendingEcho(null);
       busy.current = false;
@@ -90,7 +87,7 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   // The match's own replies are scripted, so a "Human" label is never an AI.
   const theirTurn =
     lastSpoken?.sender === "me" &&
-    (conn.echo.kind !== "on" || !conn.echo.theirEchoActive) &&
+    !echoOn &&
     conn.scriptIndex < (HUMAN_REPLIES[match.id]?.length ?? 0);
   useEffect(() => {
     if (!theirTurn) return;
@@ -110,11 +107,27 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   function send(e: React.FormEvent) {
     e.preventDefault();
     if (!draft.trim()) return;
-    dispatch({ type: "SEND_MESSAGE", matchId: match.id, text: draft, now: Date.now() });
+    dispatch({ type: "SEND_MESSAGE", matchId: match.id, text: draft, now: Date.now(), assisted });
     setDraft("");
+    setAssisted(false);
   }
 
-  const act = (type: "ECHO_TAKEOVER" | "ECHO_RESUME" | "ECHO_TURN_OFF") =>
+  /** Echo drafts a reply into the composer. Nothing is sent until you press Send. */
+  async function helpMeReply() {
+    if (drafting) return;
+    setDrafting(true);
+    // Skip anything already said on your side, by you or by your Echo earlier.
+    const mine = conn.messages.filter((m) => m.sender === "me" || m.sender === "myEcho").map((m) => m.text);
+    const lastFromThem = [...conn.messages].reverse().find((m) => m.sender === "them")?.text;
+    const d = draftReply(state.me, match, mine);
+    const raw = await generate(questionPrompt(state.me, match, d.topic, lastFromThem, true), undefined, 40, 0.6);
+    const question = (raw && validateQuestion(raw, state.me, match, true)) || d.question;
+    setDraft([d.opening, question].filter(Boolean).join(" "));
+    setAssisted(true);
+    setDrafting(false);
+  }
+
+  const act = (type: "ECHO_TAKEOVER" | "ECHO_TURN_OFF") =>
     dispatch({ type, matchId: match.id, who: "me", now: Date.now() });
 
   return (
@@ -131,10 +144,7 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
             Plan a date
           </Link>
         </div>
-        <div className="mt-2 flex flex-wrap gap-2 pl-1" aria-label="Who is speaking">
-          <ModePill who="You" mode={modes.me} />
-          <ModePill who={match.name} mode={modes.them} />
-        </div>
+        <ModeBar echoOn={echoOn} name={match.name} />
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4" aria-live="polite">
@@ -165,8 +175,8 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
           <div className="mb-3 rounded-2xl border border-echo/25 bg-echo-soft p-4">
             <p className="font-semibold text-echo-strong">{match.name} asked to use Echo chat</p>
             <p className="mt-1 text-sm text-ink/80">
-              Your Echo and {match.name}'s Echo would chat for you both. Every message shows who wrote it, and either of
-              you can join at any time. Nothing changes unless you agree.
+              Your Echo and {match.name}'s Echo would chat for you both. Every message shows who wrote it. Either of you
+              can join at any time, and then it's just the two of you. Nothing changes unless you agree.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
@@ -187,35 +197,44 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
           </div>
         )}
 
-        {myEchoSpeaking ? (
+        {echoOn ? (
           <div>
             <p className="flex items-center gap-2 text-sm text-echo-strong">
               <span className="size-2 animate-pulse rounded-full bg-echo" />
-              {pausedForCatchUp ? "The Echoes paused so you can catch up." : "Your Echo is chatting for you."}
+              {pausedForCatchUp ? "The Echoes paused so you can catch up." : `Your Echo and ${match.name}'s Echo are chatting.`}
               {ai.demo && <span className="text-muted">(demo replies)</span>}
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className={`mt-3 grid gap-2 ${pausedForCatchUp ? "grid-cols-2" : ""}`}>
               <button type="button" className="btn-primary" onClick={() => act("ECHO_TAKEOVER")}>
                 Join as yourself
               </button>
-              {pausedForCatchUp ? (
+              {pausedForCatchUp && (
                 <button type="button" className="btn-secondary" onClick={() => setExtraRounds((n) => n + 1)}>
                   Let them keep going
                 </button>
-              ) : (
-                <button type="button" className="btn-secondary" onClick={() => act("ECHO_TURN_OFF")}>
-                  Turn off Echo chat
-                </button>
               )}
             </div>
+            <p className="mt-2 text-center text-[13px] text-muted">
+              Joining ends Echo chat for both of you, so it's just you and {match.name}.
+            </p>
           </div>
         ) : (
           <>
             <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
               {conn.echo.kind === "off" && (
-                <button type="button" className="font-medium text-echo hover:underline" onClick={() => setAskOpen(true)}>
-                  Use Echo chat
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="font-medium text-echo hover:underline disabled:opacity-50"
+                    onClick={() => void helpMeReply()}
+                    disabled={drafting}
+                  >
+                    {drafting ? "Echo is drafting…" : "Help me reply"}
+                  </button>
+                  <button type="button" className="font-medium text-muted hover:text-ink hover:underline" onClick={() => setAskOpen(true)}>
+                    Use Echo chat
+                  </button>
+                </>
               )}
               {waitingForThem && (
                 <>
@@ -225,23 +244,15 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
                   </button>
                 </>
               )}
-              {echoOn && (
-                <>
-                  <span className="text-muted">Typing as you.</span>
-                  <button type="button" className="font-medium text-echo hover:underline" onClick={() => act("ECHO_RESUME")}>
-                    Hand back to Echo
-                  </button>
-                  <button type="button" className="font-medium text-muted underline" onClick={() => act("ECHO_TURN_OFF")}>
-                    Turn off
-                  </button>
-                </>
-              )}
             </div>
             <form className="flex items-end gap-2" onSubmit={send}>
               <input
                 className="field flex-1"
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  if (!e.target.value) setAssisted(false);
+                }}
                 placeholder={`Message ${match.name}`}
                 aria-label={`Message ${match.name}`}
                 maxLength={500}
@@ -250,6 +261,11 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
                 Send
               </button>
             </form>
+            {assisted && draft && (
+              <p className="mt-1.5 text-[13px] text-muted">
+                Echo drafted this. Edit it however you like. It's only sent when you press Send, as you.
+              </p>
+            )}
           </>
         )}
       </div>
@@ -259,7 +275,7 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
           <li>Your Echo and {match.name}'s Echo chat for you both, based on your profiles.</li>
           <li>It only starts if {match.name} agrees too.</li>
           <li>Every message shows whether a person or an Echo wrote it.</li>
-          <li>Either of you can join as yourself or turn it off at any time.</li>
+          <li>Either of you can join at any time. Then Echo chat ends for both of you, and it's just the two of you.</li>
         </ul>
         <div className="mt-5 grid grid-cols-2 gap-2">
           <button type="button" className="btn-secondary" onClick={() => setAskOpen(false)}>
@@ -281,17 +297,20 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   );
 }
 
-function ModePill({ who, mode }: { who: string; mode: "Human" | "Echo" }) {
-  const echo = mode === "Echo";
+/** One shared mode for the whole chat: two Echoes, or two people. Never a mix. */
+function ModeBar({ echoOn, name }: { echoOn: boolean; name: string }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium ${
-        echo ? "border-echo/30 bg-echo-soft text-echo-strong" : "border-line bg-surface text-ink"
+    <div
+      className={`mt-2 flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[13px] ${
+        echoOn ? "border-echo/30 bg-echo-soft text-echo-strong" : "border-line bg-surface text-ink"
       }`}
+      aria-label="Who is chatting"
     >
-      {who}
-      <span aria-hidden="true">·</span>
-      <span className="font-semibold">{echo ? "Echo (AI)" : "Human"}</span>
-    </span>
+      <span className="font-semibold">{echoOn ? "Echo chat (AI)" : "Direct chat"}</span>
+      <span aria-hidden="true" className="text-muted">·</span>
+      <span className={echoOn ? "" : "text-muted"}>
+        {echoOn ? `Your Echo and ${name}'s Echo are talking` : `Every message is typed by you or ${name}`}
+      </span>
+    </div>
   );
 }

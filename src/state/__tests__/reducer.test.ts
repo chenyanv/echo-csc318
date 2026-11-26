@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isMatchNotified, reducer, speakerModes, todayMatchId, type Action } from "../reducer";
+import { chatMode, isMatchNotified, reducer, todayMatchId, type Action } from "../reducer";
 import { buildPreset } from "../presets";
 import { UNDO_MS, type AppState } from "../types";
 
@@ -38,7 +38,7 @@ describe("daily match decisions", () => {
 
 describe("Echo chat needs both people to agree", () => {
   it("starts off, with both people typing as themselves", () => {
-    expect(speakerModes(alex(buildPreset("t2", T)).echo)).toEqual({ me: "Human", them: "Human" });
+    expect(chatMode(alex(buildPreset("t2", T)).echo)).toBe("direct");
   });
 
   it("doesn't turn on when only one side asks", () => {
@@ -52,19 +52,21 @@ describe("Echo chat needs both people to agree", () => {
     expect(alex(ignored).messages).toHaveLength(alex(s).messages.length);
   });
 
-  it("turns on when the other side agrees, and each side can take over", () => {
-    let s = run(
-      buildPreset("t4", T),
-      { type: "ECHO_RESPOND", matchId: "alex", by: "me", accept: true, now: T },
-    );
-    expect(speakerModes(alex(s).echo)).toEqual({ me: "Echo", them: "Echo" });
+  it("turns on when the other side agrees", () => {
+    const s = run(buildPreset("t4", T), { type: "ECHO_RESPOND", matchId: "alex", by: "me", accept: true, now: T });
+    expect(chatMode(alex(s).echo)).toBe("echo");
+  });
 
-    s = run(s, { type: "ECHO_TAKEOVER", matchId: "alex", who: "me", now: T });
-    expect(speakerModes(alex(s).echo)).toEqual({ me: "Human", them: "Echo" });
-    expect(lastLine(s)).toBe("You joined. Your Echo is paused.");
-
-    s = run(s, { type: "ECHO_TAKEOVER", matchId: "alex", who: "them", now: T });
-    expect(alex(s).echo.kind).toBe("off");
+  it("ends Echo chat for both people when either one joins, so nobody talks to an Echo", () => {
+    const on = run(buildPreset("t4", T), { type: "ECHO_RESPOND", matchId: "alex", by: "me", accept: true, now: T });
+    for (const who of ["me", "them"] as const) {
+      const s = run(on, { type: "ECHO_TAKEOVER", matchId: "alex", who, now: T });
+      expect(chatMode(alex(s).echo)).toBe("direct");
+      expect(lastLine(s)).toMatch(/joined, so Echo chat is off for both of you/);
+      // Echoes can't speak once someone has joined.
+      const late = run(s, { type: "ADD_ECHO_MESSAGE", matchId: "alex", sender: "theirEcho", text: "hi", now: T });
+      expect(alex(late).messages).toHaveLength(alex(s).messages.length);
+    }
   });
 
   it("treats typing your own message as joining", () => {
@@ -73,9 +75,21 @@ describe("Echo chat needs both people to agree", () => {
       { type: "ECHO_RESPOND", matchId: "alex", by: "me", accept: true, now: T },
       { type: "SEND_MESSAGE", matchId: "alex", text: "hey it's actually me", now: T },
     );
-    expect(speakerModes(alex(s).echo).me).toBe("Human");
+    expect(chatMode(alex(s).echo)).toBe("direct");
     const senders = alex(s).messages.slice(-2).map((m) => m.sender);
     expect(senders).toEqual(["system", "me"]);
+  });
+
+  it("needs a new invite, agreed by both, to go back to Echo chat", () => {
+    let s = run(
+      buildPreset("t4", T),
+      { type: "ECHO_RESPOND", matchId: "alex", by: "me", accept: true, now: T },
+      { type: "ECHO_TAKEOVER", matchId: "alex", who: "them", now: T },
+      { type: "ECHO_INVITE", matchId: "alex", by: "me", now: T },
+    );
+    expect(alex(s).echo).toEqual({ kind: "invited", by: "me" });
+    s = run(s, { type: "ECHO_RESPOND", matchId: "alex", by: "them", accept: true, now: T });
+    expect(chatMode(alex(s).echo)).toBe("echo");
   });
 
   it("declining keeps it off", () => {

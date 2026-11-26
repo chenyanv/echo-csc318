@@ -19,7 +19,7 @@ const MAX = 2000;
 function describe(a: Action): string | undefined {
   switch (a.type) {
     case "SEND_MESSAGE":
-      return `${a.text.trim().length} chars`;
+      return `${a.text.trim().length} chars${a.assisted ? ", started from Echo draft" : ""}`;
     case "QUICK_CHAT_ADD":
       return `${a.sender}, ${a.text.length} chars${a.demo ? ", demo" : ""}`;
     case "ADD_ECHO_MESSAGE":
@@ -31,7 +31,6 @@ function describe(a: Action): string | undefined {
     case "ECHO_RESPOND":
       return `by ${a.by}, ${a.accept ? "accept" : "decline"}`;
     case "ECHO_TAKEOVER":
-    case "ECHO_RESUME":
     case "ECHO_TURN_OFF":
     case "SHARE_IG":
       return `who ${a.who}`;

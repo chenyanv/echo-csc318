@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Avatar } from "../components/ui/Avatar";
 import { PageTitle } from "../components/ui/PageHeader";
 import { getMatch } from "../data/profiles";
-import { speakerModes } from "../state/reducer";
 import { useStore } from "../state/store";
 
 export default function Chats() {
@@ -25,8 +24,7 @@ export default function Chats() {
           {list.map((c) => {
             const m = getMatch(c.matchId);
             const last = [...c.messages].reverse().find((x) => x.sender !== "system");
-            const modes = speakerModes(c.echo);
-            const echoOn = modes.me === "Echo" || modes.them === "Echo";
+            const echoOn = c.echo.kind === "on";
             const who =
               last?.sender === "me" ? "You: " : last?.sender === "myEcho" ? "Your Echo: " : last?.sender === "theirEcho" ? `${m.name}'s Echo: ` : "";
             return (

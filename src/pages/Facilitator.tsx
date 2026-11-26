@@ -102,10 +102,10 @@ export default function Facilitator() {
               Declines Echo chat
             </Act>
             <Act
-              disabled={!c || c.echo.kind !== "on" || !c.echo.theirEchoActive}
+              disabled={!c || c.echo.kind !== "on"}
               onClick={() => dispatch({ type: "ECHO_TAKEOVER", matchId, who: "them", now: now() })}
             >
-              {match.name} joins as themself
+              {match.name} joins (ends Echo chat)
             </Act>
             <Act
               disabled={c?.plan?.status !== "sent"}
