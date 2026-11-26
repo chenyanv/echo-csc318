@@ -5,6 +5,7 @@ import { Avatar } from "../components/ui/Avatar";
 import { isUndoable, newConnection, todayMatchId } from "../state/reducer";
 import { useNow, useStore } from "../state/store";
 import { matchFor } from "../data/tailor";
+import { BottomBar } from "../components/BottomBar";
 
 export default function Today() {
   const { state, dispatch } = useStore();
@@ -68,14 +69,16 @@ export default function Today() {
         <MatchReasonBlock me={state.me} match={match} />
       </article>
 
-      <div className="sticky -bottom-6 -mx-4 -mb-6 mt-5 grid grid-cols-2 gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur">
+      <BottomBar>
+        <div className="grid grid-cols-2 gap-3">
         <button type="button" className="btn-secondary" onClick={() => dispatch({ type: "MATCH_PASS", matchId, now: Date.now() })}>
           Not for me
         </button>
         <button type="button" className="btn-primary" onClick={() => dispatch({ type: "MATCH_ACCEPT", matchId, now: Date.now() })}>
           I'm interested
         </button>
-      </div>
+        </div>
+      </BottomBar>
     </section>
   );
 }

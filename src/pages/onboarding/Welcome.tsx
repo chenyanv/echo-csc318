@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EchoMark } from "../../components/EchoMark";
+import { BottomBar } from "../../components/BottomBar";
 
 const POINTS = [
   {
@@ -59,10 +60,12 @@ export default function Welcome() {
             I understand this is a research prototype. Profiles and replies from matches are made up.
           </Check>
         </div>
-        <button className="btn-primary mt-6 w-full" disabled={!adult || !prototype} onClick={() => navigate("/setup")}>
+      </div>
+      <BottomBar>
+        <button className="btn-primary w-full" disabled={!adult || !prototype} onClick={() => navigate("/setup")}>
           Get started
         </button>
-      </div>
+      </BottomBar>
     </div>
   );
 }

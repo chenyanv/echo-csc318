@@ -62,8 +62,8 @@ Vercel 的 serverless 函数没有 GPU，函数体积和运行时间也有限制
 
 ## 3. 已定的设计决定
 
-1. **默认人和人直接聊**，状态栏显示 `Direct chat · Every message is typed by you or Alex`。
-2. **AI 代聊需要双方都同意。**一方发起邀请 → 等对方同意 → 状态栏变成 `Echo chat (AI) · Your Echo and Alex's Echo are talking`。
+1. **默认人和人直接聊**，状态栏显示 `Direct chat · Only you and Alex are typing`。
+2. **AI 代聊需要双方都同意。**一方发起邀请 → 等对方同意 → 状态栏变成 `Echo chat (AI) · Your two Echoes are talking`。
    **整个聊天同一时间只有一种模式：要么两个 Echo，要么两个人，不会出现人和 Echo 对话。**（2026-11-25 定，回答 PPT 第 12 页反馈问题 1；依据 A2 Finding 1 和 A1 里 16/20 担心被 AI 错误代表。）任何一方点 **Join as yourself**（或直接打字），Echo chat 对双方都结束，插入一行 "You joined, so Echo chat is off for both of you…"。想再用 Echo chat 要重新邀请、双方再同意。
 2b. **Help me reply**（直接聊天里）：Echo 把草稿放进输入框，用户改完自己点发送，消息算用户自己的，不加标签。草稿只提双方资料里真的共同的兴趣，再加一个问题；不编造任何事。会话日志记一笔 "started from Echo draft"（不存文字）。
 3. **每条消息都带发言者标签**（You / Alex / Your Echo / Alex's Echo），AI 消息用不同的气泡样式。

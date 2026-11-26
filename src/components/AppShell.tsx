@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation, useMatch } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { BottomBarSlot } from "./BottomBar";
 import type { ReactNode } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 
@@ -65,6 +66,7 @@ export default function AppShell() {
   const { pathname } = useLocation();
   const isChat = Boolean(useMatch("/chats/:id"));
   const scrollRef = useRef<HTMLElement>(null);
+  const [slot, setSlot] = useState<HTMLDivElement | null>(null);
 
   // Each new screen starts at the top.
   useEffect(() => {
@@ -73,7 +75,9 @@ export default function AppShell() {
 
   return (
     <PhoneFrame>
+      <BottomBarSlot.Provider value={slot}>
       <main
+        style={{ "--page-px": "1rem" } as CSSProperties}
         id="scroll-root"
         ref={scrollRef}
         className={
@@ -84,6 +88,9 @@ export default function AppShell() {
       >
         <Outlet />
       </main>
+      {/* Pages' pinned actions (<BottomBar>) render here, between the page and the tab bar. */}
+      <div ref={setSlot} className="z-20 shrink-0 empty:hidden" style={{ "--page-px": "1rem" } as CSSProperties} />
+      </BottomBarSlot.Provider>
 
       <nav aria-label="Main" className="z-20 shrink-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <ul className="grid grid-cols-4">

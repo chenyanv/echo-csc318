@@ -6,6 +6,7 @@ import { GOALS, INTERESTS, PACES, VALUES, type Goal, type Interest, type Pace, t
 import { cleanHandle } from "../../lib/instagram";
 import { scrollPageToTop } from "../../components/PhoneFrame";
 import { useStore } from "../../state/store";
+import { BottomBar } from "../../components/BottomBar";
 
 const PRONOUNS = ["she/her", "he/him", "they/them"];
 const YEARS = ["1st year", "2nd year", "3rd year", "4th year", "Grad student"];
@@ -183,7 +184,8 @@ export default function Setup() {
         )}
       </div>
 
-      <button type="button" className="btn-primary mt-8 w-full" disabled={!current.valid} onClick={next}>
+      <BottomBar>
+      <button type="button" className="btn-primary w-full" disabled={!current.valid} onClick={next}>
         {step === steps.length - 1
           ? state.onboarded
             ? "Save changes"
@@ -192,6 +194,7 @@ export default function Setup() {
               : "Skip for now"
           : "Continue"}
       </button>
+      </BottomBar>
     </div>
   );
 }

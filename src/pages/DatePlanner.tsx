@@ -10,6 +10,7 @@ import { isoDate } from "../state/presets";
 import { useStore } from "../state/store";
 import type { Connection, DatePlan } from "../state/types";
 import { matchFor } from "../data/tailor";
+import { BottomBar } from "../components/BottomBar";
 
 export default function DatePlanner() {
   const { id = "" } = useParams();
@@ -128,12 +129,14 @@ function PlanForm({ match, conn }: { match: Profile; conn: Connection }) {
         <p className="text-muted">{place}</p>
       </div>
 
-      <button type="button" className="btn-primary mt-5 w-full" onClick={send} disabled={!date || date < today}>
-        Send invite to {match.name}
-      </button>
-      <p className="mt-2 text-center text-[13px] text-muted">
+      <p className="mt-4 text-center text-[13px] text-muted">
         Nothing is booked until {match.name} accepts. They can also suggest a different time.
       </p>
+      <BottomBar>
+        <button type="button" className="btn-primary w-full" onClick={send} disabled={!date || date < today}>
+          Send invite to {match.name}
+        </button>
+      </BottomBar>
     </>
   );
 }
@@ -206,7 +209,8 @@ function PlanStatus({ match, plan }: { match: Profile; plan: DatePlan }) {
       )}
 
       {plan.status === "counter" && (
-        <div className="mt-5 grid gap-3">
+        <BottomBar>
+        <div className="grid gap-2">
           <button type="button" className="btn-primary" onClick={() => dispatch({ type: "PLAN_ACCEPT_COUNTER", matchId: match.id, now: Date.now() })}>
             Accept {plan.counter?.time ? formatTime(plan.counter.time) : "change"}
           </button>
@@ -214,13 +218,15 @@ function PlanStatus({ match, plan }: { match: Profile; plan: DatePlan }) {
             Suggest something else
           </button>
         </div>
+        </BottomBar>
       )}
 
       {plan.status === "confirmed" && !happened && (
         <>
+          <BottomBar>
           <button
             type="button"
-            className="btn-primary mt-5 w-full"
+            className="btn-primary w-full"
             onClick={() =>
               downloadIcs({
                 uid: `${match.id}-${plan.date}-${plan.time}`,
@@ -235,7 +241,8 @@ function PlanStatus({ match, plan }: { match: Profile; plan: DatePlan }) {
           >
             <CalendarIcon /> Add to calendar
           </button>
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          </BottomBar>
+          <div className="mt-5 grid grid-cols-2 gap-3">
             <button type="button" className="btn-secondary" onClick={revise}>
               Change plan
             </button>
@@ -255,9 +262,11 @@ function PlanStatus({ match, plan }: { match: Profile; plan: DatePlan }) {
       )}
 
       {happened && (
-        <Link to={`/match/${match.id}/reflect`} className="btn-primary mt-5 w-full">
-          How did it go?
-        </Link>
+        <BottomBar>
+          <Link to={`/match/${match.id}/reflect`} className="btn-primary w-full">
+            How did it go?
+          </Link>
+        </BottomBar>
       )}
 
       <Link to={`/chats/${match.id}`} className="mt-6 block text-center text-[15px] font-medium text-muted hover:text-ink">

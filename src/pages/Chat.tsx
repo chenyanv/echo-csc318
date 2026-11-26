@@ -162,23 +162,23 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
 
       <div className="shrink-0 border-t border-line bg-canvas px-4 pt-3 pb-3">
         {conn.echo.kind === "invited" && conn.echo.by === "them" && (
-          <div className="mb-3 rounded-2xl border border-echo/25 bg-echo-soft p-4">
+          <div className="mb-3 rounded-2xl border border-echo/25 bg-echo-soft p-3.5">
             <p className="font-semibold text-echo-strong">{match.name} asked to use Echo chat</p>
             <p className="mt-1 text-sm text-ink/80">
-              Your Echo and {match.name}'s Echo would chat for you both. Every message shows who wrote it. Either of you
-              can join at any time, and then it's just the two of you. Nothing changes unless you agree.
+              Your two Echoes would chat for you, each message labelled. Either of you can join anytime, and then it's
+              just you two.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn-secondary min-h-11 px-3 text-[15px] whitespace-nowrap"
                 onClick={() => dispatch({ type: "ECHO_RESPOND", matchId: match.id, by: "me", accept: false, now: Date.now() })}
               >
-                Keep chatting myself
+                No, thanks
               </button>
               <button
                 type="button"
-                className="btn-echo"
+                className="btn-echo min-h-11 px-3 text-[15px] whitespace-nowrap"
                 onClick={() => dispatch({ type: "ECHO_RESPOND", matchId: match.id, by: "me", accept: true, now: Date.now() })}
               >
                 Turn on Echo chat
@@ -199,8 +199,8 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
                 Join as yourself
               </button>
               {pausedForCatchUp && (
-                <button type="button" className="btn-secondary" onClick={() => setExtraRounds((n) => n + 1)}>
-                  Let them keep going
+                <button type="button" className="btn-secondary px-3 whitespace-nowrap" onClick={() => setExtraRounds((n) => n + 1)}>
+                  Let them continue
                 </button>
               )}
             </div>
@@ -288,19 +288,19 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   );
 }
 
-/** One shared mode for the whole chat: two Echoes, or two people. Never a mix. */
+/** One shared mode for the whole chat: two Echoes, or two people. Never a mix. Kept to one line on small phones. */
 function ModeBar({ echoOn, name }: { echoOn: boolean; name: string }) {
   return (
     <div
-      className={`mt-2 flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[13px] ${
+      className={`mt-2 flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[13px] whitespace-nowrap ${
         echoOn ? "border-echo/30 bg-echo-soft text-echo-strong" : "border-line bg-surface text-ink"
       }`}
       aria-label="Who is chatting"
     >
-      <span className="font-semibold">{echoOn ? "Echo chat (AI)" : "Direct chat"}</span>
+      <span className="shrink-0 font-semibold">{echoOn ? "Echo chat (AI)" : "Direct chat"}</span>
       <span aria-hidden="true" className="text-muted">·</span>
-      <span className={echoOn ? "" : "text-muted"}>
-        {echoOn ? `Your Echo and ${name}'s Echo are talking` : `Every message is typed by you or ${name}`}
+      <span className={`min-w-0 truncate ${echoOn ? "" : "text-muted"}`}>
+        {echoOn ? "Your two Echoes are talking" : `Only you and ${name} are typing`}
       </span>
     </div>
   );

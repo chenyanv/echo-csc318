@@ -7,6 +7,7 @@ import { formatDate } from "../lib/format";
 import { useStore } from "../state/store";
 import type { Feeling } from "../state/types";
 import { matchFor } from "../data/tailor";
+import { BottomBar } from "../components/BottomBar";
 
 const FEELINGS: { value: Feeling; label: string; hint: string }[] = [
   { value: "yes", label: "Yes", hint: "I'd like to see them again" },
@@ -56,7 +57,7 @@ export default function Reflection() {
       </p>
 
       <div className="card mt-6 p-5">
-        <div className="flex items-center gap-2 text-[13px] font-medium text-muted">
+        <div className="flex items-start gap-2 text-[13px] font-medium text-muted">
           <LockIcon /> Private. Only you can see this. {match.name} never sees your answers or notes.
         </div>
 
@@ -99,11 +100,8 @@ export default function Reflection() {
           />
         </label>
 
-        <button type="button" className="btn-primary mt-4 w-full" onClick={save} disabled={!feeling && !note.trim()}>
-          {saved ? "Saved" : "Save privately"}
-        </button>
         {saved && (
-          <p className="mt-2 text-sm text-ok" role="status">
+          <p className="mt-4 text-sm text-ok" role="status">
             Saved. Nothing was sent to {match.name}.
           </p>
         )}
@@ -162,13 +160,18 @@ export default function Reflection() {
           </form>
         )}
       </div>
+      <BottomBar>
+        <button type="button" className="btn-primary w-full" onClick={save} disabled={saved || (!feeling && !note.trim())}>
+          {saved ? "Saved privately" : "Save privately"}
+        </button>
+      </BottomBar>
     </section>
   );
 }
 
 function LockIcon() {
   return (
-    <svg viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+    <svg viewBox="0 0 16 16" className="mt-px size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
       <rect x="3" y="7" width="10" height="7" rx="1.5" />
       <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
     </svg>

@@ -7,6 +7,7 @@ import { MessageBubble } from "../../components/chat/MessageBubble";
 import { BackButton } from "../../components/ui/PageHeader";
 import { QUICK_CHAT_FALLBACK } from "../../data/scripts";
 import { useStore } from "../../state/store";
+import { BottomBar } from "../../components/BottomBar";
 
 /** After this many answers we offer to finish. People can always skip. */
 const ANSWERS_TO_FINISH = 3;
@@ -121,9 +122,7 @@ export default function QuickChat() {
         {pending !== null && <MessageBubble message={{ sender: "myEcho", text: pending }} echoLabel="Echo" echoOnLeft streaming />}
       </div>
 
-      {/* Pinned to the very bottom of the frame: the negative offset and margin cancel the page's bottom padding,
-          otherwise messages scroll through the gap underneath. */}
-      <div className="sticky bottom-[calc(-1*max(1.5rem,env(safe-area-inset-bottom)))] -mx-5 mt-4 mb-[calc(-1*max(1.5rem,env(safe-area-inset-bottom)))] border-t border-line bg-canvas px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <BottomBar>
         {done ? (
           <button type="button" className="btn-primary w-full" onClick={finish}>
             Finish setup
@@ -152,7 +151,7 @@ export default function QuickChat() {
             </button>
           </form>
         )}
-      </div>
+      </BottomBar>
     </div>
   );
 }
