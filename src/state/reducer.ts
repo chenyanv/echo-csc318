@@ -47,6 +47,8 @@ export type Action =
   /** Reopen a sent, counter-offered or confirmed plan for editing. It stops being confirmed. */
   | { type: "PLAN_REVISE"; matchId: string; now: number }
   | { type: "SHARE_IG"; matchId: string; who: Side; now: number }
+  /** Demo only: pretend a confirmed date already happened (moves it to `date`, normally yesterday). */
+  | { type: "DEMO_DATE_HAPPENED"; matchId: string; date: string; now: number }
   | { type: "SAVE_REFLECTION"; matchId: string; feeling?: Feeling; note: string; now: number };
 
 let idCounter = 0;
@@ -353,6 +355,17 @@ export function reducer(state: AppState, action: Action): AppState {
           action.now,
         );
       });
+
+    case "DEMO_DATE_HAPPENED":
+      return updateConnection(state, action.matchId, (c) =>
+        c.plan?.status === "confirmed"
+          ? addSystem(
+              { ...c, plan: { ...c.plan, date: action.date, updatedAt: action.now } },
+              `Demo: skipped ahead. Your date with ${getMatch(c.matchId).name} was yesterday.`,
+              action.now,
+            )
+          : c,
+      );
 
     case "SAVE_REFLECTION":
       return updateConnection(state, action.matchId, (c) => ({

@@ -98,6 +98,17 @@ describe("Echo chat needs both people to agree", () => {
   });
 });
 
+describe("demo: skip to after the date", () => {
+  it("only moves a confirmed date, and says it was a skip", () => {
+    const t5 = buildPreset("t5", T);
+    const upcoming = run(t5, { type: "PLAN_REVISE", matchId: "alex", now: T });
+    expect(run(upcoming, { type: "DEMO_DATE_HAPPENED", matchId: "alex", date: "2026-01-01", now: T })).toBe(upcoming);
+    const s = run(t5, { type: "DEMO_DATE_HAPPENED", matchId: "alex", date: "2026-01-01", now: T });
+    expect(alex(s).plan?.date).toBe("2026-01-01");
+    expect(lastLine(s)).toMatch(/^Demo: skipped ahead/);
+  });
+});
+
 describe("date planning", () => {
   const draft = (s: AppState) =>
     run(s, {

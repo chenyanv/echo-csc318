@@ -246,6 +246,11 @@ function PlanStatus({ match, plan }: { match: Profile; plan: DatePlan }) {
           <p className="mt-3 text-center text-[13px] text-muted">
             Changed your plans? Update your calendar too.
           </p>
+          <DemoSkip
+            label="Skip to after the date"
+            note="Moves the date to yesterday so you can try the after-date step."
+            onClick={() => dispatch({ type: "DEMO_DATE_HAPPENED", matchId: match.id, date: isoDate(-1, Date.now()), now: Date.now() })}
+          />
         </>
       )}
 
@@ -280,6 +285,19 @@ function PlanStatus({ match, plan }: { match: Profile; plan: DatePlan }) {
         </div>
       </Sheet>
     </>
+  );
+}
+
+/** A control that only exists because this is a prototype. Styled so it can't be mistaken for a real feature. */
+function DemoSkip({ label, note, onClick }: { label: string; note: string; onClick: () => void }) {
+  return (
+    <div className="mt-6 rounded-2xl border border-dashed border-ink/20 p-3 text-center">
+      <p className="text-[11px] font-semibold tracking-wide text-muted uppercase">Demo only</p>
+      <button type="button" onClick={onClick} className="mt-1 min-h-10 text-[15px] font-medium text-ink underline underline-offset-4">
+        {label} →
+      </button>
+      <p className="text-[12px] text-muted">{note}</p>
+    </div>
   );
 }
 
