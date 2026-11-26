@@ -94,3 +94,20 @@ export async function streamReply(
     },
   };
 }
+
+/** One non-streamed reply constrained to a JSON schema (WebLLM's grammar-guided decoding). */
+export async function completeJson(
+  messages: ChatCompletionMessageParam[],
+  schema: object,
+  opts: { maxTokens?: number; temperature?: number } = {},
+): Promise<string> {
+  if (!engine) throw new Error("Model not loaded");
+  const reply = await engine.chat.completions.create({
+    messages,
+    stream: false,
+    max_tokens: opts.maxTokens ?? 200,
+    temperature: opts.temperature ?? 0.8,
+    response_format: { type: "json_object", schema: JSON.stringify(schema) },
+  });
+  return reply.choices[0]?.message?.content ?? "";
+}

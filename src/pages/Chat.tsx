@@ -8,13 +8,12 @@ import { Avatar } from "../components/ui/Avatar";
 import { BackButton } from "../components/ui/PageHeader";
 import { Sheet } from "../components/ui/Sheet";
 import { MATCHES, type Profile } from "../data/profiles";
-import { HUMAN_REPLIES } from "../data/scripts";
+import { usePartnerTyping } from "../sim/simStores";
 import { useStore } from "../state/store";
 import type { Connection } from "../state/types";
 
 /** Pause between turns so people can read along. */
 const ECHO_DELAY_MS = 1500;
-const HUMAN_REPLY_DELAY_MS = 2200;
 
 export default function Chat() {
   const { id = "" } = useParams();
@@ -35,7 +34,6 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   const [assisted, setAssisted] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [pendingEcho, setPendingEcho] = useState<{ speaker: EchoSpeaker; text: string } | null>(null);
-  const [themTyping, setThemTyping] = useState(false);
   const [extraRounds, setExtraRounds] = useState(0);
   const [askOpen, setAskOpen] = useState(false);
   /** Bumped after each Echo turn so the next one is re-checked even if nothing else changed. */
@@ -46,7 +44,8 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   const echoOn = conn.echo.kind === "on";
   const roundLimit = ECHO_TURNS_PER_ROUND * (extraRounds + 1);
   const pausedForCatchUp = echoOn && echoTurnsSinceHuman(conn) >= roundLimit;
-  const lastSpoken = conn.messages.filter((m) => m.sender !== "system").at(-1);
+  // The match's side (typing as themself) is played by the Partner simulator.
+  const themTyping = usePartnerTyping(match.id);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -83,24 +82,6 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
     }, ECHO_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [conn, tick, pausedForCatchUp, dispatch, match, state.me]);
-
-  // The match's own replies are scripted, so a "Human" label is never an AI.
-  const theirTurn =
-    lastSpoken?.sender === "me" &&
-    !echoOn &&
-    conn.scriptIndex < (HUMAN_REPLIES[match.id]?.length ?? 0);
-  useEffect(() => {
-    if (!theirTurn) return;
-    setThemTyping(true);
-    const timer = window.setTimeout(() => {
-      setThemTyping(false);
-      dispatch({ type: "RECEIVE_HUMAN_REPLY", matchId: match.id, now: Date.now() });
-    }, HUMAN_REPLY_DELAY_MS);
-    return () => {
-      window.clearTimeout(timer);
-      setThemTyping(false);
-    };
-  }, [theirTurn, lastSpoken?.id, dispatch, match.id]);
 
   const waitingForThem = conn.echo.kind === "invited" && conn.echo.by === "me";
 

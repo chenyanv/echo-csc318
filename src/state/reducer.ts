@@ -30,7 +30,8 @@ export type Action =
   | { type: "MATCH_RESTORE"; matchId: string }
   /** `assisted`: the text started as an Echo draft ("Help me reply"). Only logged; the message is still yours. */
   | { type: "SEND_MESSAGE"; matchId: string; text: string; now: number; assisted?: boolean }
-  | { type: "RECEIVE_HUMAN_REPLY"; matchId: string; now: number }
+  /** The match types a message. Without `text`, the next scripted line is used. */
+  | { type: "RECEIVE_HUMAN_REPLY"; matchId: string; now: number; text?: string }
   | { type: "ADD_ECHO_MESSAGE"; matchId: string; sender: "myEcho" | "theirEcho"; text: string; demo?: boolean; now: number }
   | { type: "ECHO_INVITE"; matchId: string; by: Side; now: number }
   | { type: "ECHO_RESPOND"; matchId: string; by: Side; accept: boolean; now: number }
@@ -38,7 +39,8 @@ export type Action =
   | { type: "ECHO_TURN_OFF"; matchId: string; who: Side; now: number }
   | { type: "PLAN_UPDATE"; matchId: string; patch: Partial<Pick<DatePlan, "activityId" | "place" | "date" | "time">>; now: number }
   | { type: "PLAN_SEND"; matchId: string; now: number }
-  | { type: "PLAN_THEIR_RESPONSE"; matchId: string; response: "accept" | "reschedule" | "decline"; now: number }
+  /** `note` and `time` come from the simulated match; without them the scripted reply (5 pm) is used. */
+  | { type: "PLAN_THEIR_RESPONSE"; matchId: string; response: "accept" | "reschedule" | "decline"; now: number; note?: string; time?: string }
   | { type: "PLAN_ACCEPT_COUNTER"; matchId: string; now: number }
   | { type: "PLAN_CANCEL"; matchId: string; now: number }
   /** Reopen a sent, counter-offered or confirmed plan for editing. It stops being confirmed. */
@@ -167,7 +169,8 @@ function planReducer(c: Connection, action: Action, name: string): Connection {
     }
     case "PLAN_THEIR_RESPONSE": {
       if (!c.plan || c.plan.status !== "sent") return c;
-      const text = INVITE_RESPONSES[action.response];
+      const text = action.note?.trim() || INVITE_RESPONSES[action.response];
+      const newTime = action.time ?? "17:00";
       const withReply = { ...c, messages: [...c.messages, msg("them", text, action.now)] };
       if (action.response === "accept") {
         return addSystem(
@@ -182,7 +185,7 @@ function planReducer(c: Connection, action: Action, name: string): Connection {
       return addSystem(
         {
           ...withReply,
-          plan: { ...c.plan, status: "counter", counter: { time: "17:00", note: text }, updatedAt: action.now },
+          plan: { ...c.plan, status: "counter", counter: { time: newTime, note: text }, updatedAt: action.now },
         },
         `${name} suggested a different time. Nothing is confirmed until you both agree.`,
         action.now,
@@ -305,6 +308,8 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case "RECEIVE_HUMAN_REPLY":
       return updateConnection(state, action.matchId, (c) => {
+        const own = action.text?.trim();
+        if (own) return { ...c, messages: [...c.messages, msg("them", own, action.now)] };
         const lines = HUMAN_REPLIES[c.matchId] ?? [];
         if (c.scriptIndex >= lines.length) return c;
         return {

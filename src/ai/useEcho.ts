@@ -125,6 +125,17 @@ export function canUseModel(): boolean {
 }
 
 /**
+ * One model is shared by every caller (Echo turns, Help me reply, the simulated match),
+ * so requests run one at a time.
+ */
+let queue: Promise<unknown> = Promise.resolve();
+function serial<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => {});
+  return run;
+}
+
+/**
  * Generates a short reply with the on-device model. Returns null when the model isn't
  * available, so callers fall back to scripted lines.
  */
@@ -135,13 +146,34 @@ export async function generate(
   temperature = 0.7,
 ): Promise<string | null> {
   if (!canUseModel()) return null;
-  try {
-    const e = await engine();
-    const { text } = await e.streamReply(messages, onDelta ?? (() => {}), { maxTokens, temperature });
-    return tidy(text);
-  } catch {
-    return null;
-  }
+  return serial(async () => {
+    try {
+      const e = await engine();
+      const { text } = await e.streamReply(messages, onDelta ?? (() => {}), { maxTokens, temperature });
+      return tidy(text);
+    } catch {
+      return null;
+    }
+  });
+}
+
+/** Like generate, but the reply is a JSON object matching `schema`. Null when unavailable or unparseable. */
+export async function generateJson<T>(
+  messages: ChatCompletionMessageParam[],
+  schema: object,
+  maxTokens = 200,
+  temperature = 0.8,
+): Promise<T | null> {
+  if (!canUseModel()) return null;
+  return serial(async () => {
+    try {
+      const e = await engine();
+      const raw = await e.completeJson(messages, schema, { maxTokens, temperature });
+      return JSON.parse(raw) as T;
+    } catch {
+      return null;
+    }
+  });
 }
 
 /** Small models sometimes add a speaker prefix or wrap the reply in quotes. */

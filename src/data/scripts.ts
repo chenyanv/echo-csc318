@@ -1,6 +1,6 @@
 /**
  * Scripted lines. Used for:
- * - the match's own (human) messages, which are never AI-generated, so a "Human" label is never a lie;
+ * - the match's own messages in Script mode (and when the simulator's model can't run);
  * - fallback replies when on-device AI isn't available ("Demo replies").
  */
 

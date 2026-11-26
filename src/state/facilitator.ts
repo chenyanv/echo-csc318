@@ -5,6 +5,12 @@ import { useSyncExternalStore } from "react";
  * doesn't change how the match behaves.
  */
 export interface FacilitatorSettings {
+  /**
+   * Who plays the match. "simulator": the on-device LLM decides everything the match does,
+   * differently each run. "script": the same fixed responses every time (best for A3 sessions,
+   * so every participant sees the same match).
+   */
+  partner: "simulator" | "script";
   /** What the match does when the participant asks to use Echo chat. */
   echoInvite: "accept" | "decline" | "manual";
   /** What the match does with a date invite. */
@@ -12,7 +18,7 @@ export interface FacilitatorSettings {
 }
 
 const KEY = "echo.facilitator";
-const DEFAULTS: FacilitatorSettings = { echoInvite: "accept", dateInvite: "reschedule-then-accept" };
+const DEFAULTS: FacilitatorSettings = { partner: "simulator", echoInvite: "accept", dateInvite: "reschedule-then-accept" };
 
 let settings: FacilitatorSettings = read();
 const listeners = new Set<() => void>();

@@ -41,8 +41,13 @@ Open **Profile → For researchers → Facilitator panel**, or go to `/facilitat
 1. **Before the participant arrives:** click *Load model* so they don't wait for the download.
 2. **Start a task:** pick New user or T1–T5. This resets the device to that task's starting state and
    opens its first screen.
-3. **Alex's side:** by default Alex agrees to Echo chat and suggests 5 pm for the first date invite,
-   then accepts. Switch to *Wait for me* to drive Alex with the buttons instead.
+3. **Alex's side:** choose who plays Alex.
+   - *Simulator (LLM)*, the default: the on-device model plays Alex as a person. Each new run rolls a hidden
+     personality (mood, texting style, view on Echo chat, busy times), and Alex decides every step: how to reply,
+     whether to ask for Echo chat, when to join, how to answer a date invite. Alex's reasoning shows in the panel.
+   - *Script*: the same Alex every time. Alex agrees to Echo chat and suggests 5 pm for the first date invite,
+     then accepts. **Use this for A3 sessions** so every participant gets the same conditions.
+   - *Wait for me* (either mode) lets you drive those moments with the buttons instead.
 4. **After the session:** enter the participant code and *Export log*. The log has screens, actions and
    timings only; it never stores what the participant typed.
 
@@ -64,5 +69,6 @@ src/
   data/        fictional profiles, planner options, scripted lines
   lib/         match reasons, calendar export, formatting
   pages/       one file per screen
-  state/       reducer, presets, store, scripted partner, facilitator settings, session log
+  sim/         user simulator for the match (persona, ReAct-style step, script fallback)
+  state/       reducer, presets, store, facilitator settings, session log
 ```

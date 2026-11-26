@@ -7,6 +7,9 @@ import { HUMAN_REPLIES } from "../data/scripts";
 import { setFacilitatorSetting, useFacilitatorSettings, type FacilitatorSettings } from "../state/facilitator";
 import { PRESETS, type PresetKey } from "../state/presets";
 import { clearLog, exportLog, readLog } from "../state/sessionLog";
+import { rerollMind, useMind } from "../sim/persona";
+import { clearSimLog, useSimLog } from "../sim/simStores";
+import { formatTime } from "../lib/format";
 import { useStore } from "../state/store";
 
 /** Where each task starts, so the participant lands on the right screen. */
@@ -31,6 +34,8 @@ export default function Facilitator() {
   const ai = useEchoStatus();
   const [session, setSession] = useState("");
   const [logCount, setLogCount] = useState(() => readLog().length);
+  const mind = useMind("alex");
+  const simLog = useSimLog();
 
   const matchId = "alex";
   const match = getMatch(matchId);
@@ -39,6 +44,7 @@ export default function Facilitator() {
   const scriptLeft = c ? (HUMAN_REPLIES[matchId]?.length ?? 0) - c.scriptIndex : 0;
 
   function start(key: PresetKey) {
+    clearSimLog();
     loadPreset(key);
     navigate(START_ROUTES[key]);
   }
@@ -139,7 +145,75 @@ export default function Facilitator() {
           </p>
         </Panel>
 
-        <Panel title="3. Automatic responses" note={`What ${match.name} does without you. Choose "Wait for me" to control it with the buttons above.`}>
+        <Panel
+          title={`3. Who plays ${match.name}`}
+          note={`The simulator is an on-device LLM playing ${match.name} as a person: it decides every reply, whether to suggest Echo chat, when to join, and how to answer a date invite. It's different every run. For A3 sessions, use the script so every participant sees the same ${match.name}.`}
+        >
+          <Choice
+            label={`${match.name} is played by…`}
+            value={settings.partner}
+            onChange={(v) => setFacilitatorSetting("partner", v as FacilitatorSettings["partner"])}
+            options={[
+              ["simulator", "Simulator (LLM)"],
+              ["script", "Script (same every time)"],
+            ]}
+          />
+          {settings.partner === "simulator" && (
+            <>
+              {(ai.phase !== "ready" || ai.demo) && (
+                <p className="mt-3 rounded-xl bg-warn-soft px-3 py-2 text-sm text-warn">
+                  The model isn't loaded, so {match.name} follows the script until it is (section 4).
+                </p>
+              )}
+              <div className="mt-4 rounded-xl border border-line bg-canvas p-3 text-sm">
+                <p className="font-medium">This run's {match.name} (hidden from the participant)</p>
+                {mind && c?.decision.kind === "accepted" && mind.key === `${matchId}@${c.decision.at}` ? (
+                  <ul className="mt-1.5 space-y-0.5 text-muted">
+                    <li>Mood: {mind.mood}</li>
+                    <li>Texting style: {mind.texting}</li>
+                    <li>On Echo chat: {mind.echoView}</li>
+                    <li>Busy on the date at: {mind.busy.map(formatTime).join(", ")}</li>
+                  </ul>
+                ) : (
+                  <p className="mt-1.5 text-muted">Rolled the first time {match.name} has to respond.</p>
+                )}
+                <button
+                  type="button"
+                  className="btn-secondary mt-3 min-h-9 px-3.5 text-sm"
+                  disabled={!c || c.decision.kind !== "accepted"}
+                  onClick={() => c?.decision.kind === "accepted" && rerollMind(matchId, c.decision.at)}
+                >
+                  New personality
+                </button>
+              </div>
+              <div className="mt-4">
+                <p className="text-sm font-medium">{match.name}'s reasoning, newest first</p>
+                {simLog.length === 0 ? (
+                  <p className="mt-1 text-sm text-muted">Nothing yet.</p>
+                ) : (
+                  <ol className="mt-2 space-y-2">
+                    {simLog.map((e) => (
+                      <li key={e.at + e.action} className="rounded-xl border border-line bg-surface p-3 text-sm">
+                        <p className="text-[12px] text-muted">
+                          {new Date(e.at).toLocaleTimeString()} · {e.trigger} → <strong className="text-ink">{e.action}</strong> ·{" "}
+                          {e.source === "model" ? "LLM" : "script"}
+                        </p>
+                        <p className="mt-1 italic">"{e.thought}"</p>
+                        {e.message && <p className="mt-1">Said: {e.message}</p>}
+                        {e.note && <p className="mt-1 text-warn">{e.note}</p>}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            </>
+          )}
+        </Panel>
+
+        <Panel
+          title="4. Scripted responses"
+          note={`What ${match.name} does in Script mode (and in Simulator mode when the model can't run). "Wait for me" works in both modes: ${match.name} waits for the buttons in section 2.`}
+        >
           <Choice
             label={`When asked to use Echo chat, ${match.name}…`}
             value={settings.echoInvite}
@@ -163,7 +237,7 @@ export default function Facilitator() {
           />
         </Panel>
 
-        <Panel title="4. On-device AI" note="Pre-load the model before the participant arrives, so they don't wait for the download.">
+        <Panel title="5. On-device AI" note="Pre-load the model before the participant arrives, so they don't wait for the download.">
           <p className="text-[15px]">
             Status:{" "}
             <strong>
@@ -198,7 +272,7 @@ export default function Facilitator() {
         </Panel>
 
         <Panel
-          title="5. Session log"
+          title="6. Session log"
           note="Records which screens and actions the participant used, with timings. It never stores what they typed, only how many characters."
         >
           <label className="block max-w-xs">
