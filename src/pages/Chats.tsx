@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Avatar } from "../components/ui/Avatar";
 import { PageTitle } from "../components/ui/PageHeader";
-import { getMatch } from "../data/profiles";
 import { useStore } from "../state/store";
+import { matchFor } from "../data/tailor";
 
 export default function Chats() {
   const { state } = useStore();
@@ -22,7 +22,7 @@ export default function Chats() {
       ) : (
         <ul className="space-y-2">
           {list.map((c) => {
-            const m = getMatch(c.matchId);
+            const m = matchFor(state, c.matchId);
             const last = [...c.messages].reverse().find((x) => x.sender !== "system");
             const echoOn = c.echo.kind === "on";
             const who =

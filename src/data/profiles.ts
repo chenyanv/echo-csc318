@@ -43,6 +43,18 @@ export const GOALS = {
 } as const;
 export type Goal = keyof typeof GOALS;
 
+/** Goals in a sentence. The labels above are answers ("Open to seeing where it goes"), not noun phrases. */
+export const GOAL_SENTENCES: Record<Goal, { about: (name: string) => string; both: string }> = {
+  "long-term": { about: (n) => `${n} is looking for a long-term relationship.`, both: "You're both looking for a long-term relationship." },
+  "open-to-see": { about: (n) => `${n} is open to seeing where things go.`, both: "You're both open to seeing where things go." },
+  casual: { about: (n) => `${n} is looking for something casual for now.`, both: "You're both looking for something casual for now." },
+};
+
+/** An interest as it reads in a sentence ("into finding good coffee spots", not "into coffee spots"). */
+export function interestPhrase(i: string): string {
+  return i === "Coffee spots" ? "finding good coffee spots" : i.toLowerCase();
+}
+
 export const PACES = {
   "chat-first": "Chat for a while before meeting",
   "meet-soon": "Meet fairly soon after a short chat",

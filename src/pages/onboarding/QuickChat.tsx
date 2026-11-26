@@ -116,7 +116,9 @@ export default function QuickChat() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="sticky bottom-0 -mx-5 mt-4 border-t border-line bg-canvas/95 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+      {/* Pinned to the very bottom of the frame: the negative offset and margin cancel the page's bottom padding,
+          otherwise messages scroll through the gap underneath. */}
+      <div className="sticky bottom-[calc(-1*max(1.5rem,env(safe-area-inset-bottom)))] -mx-5 mt-4 mb-[calc(-1*max(1.5rem,env(safe-area-inset-bottom)))] border-t border-line bg-canvas px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {done ? (
           <button type="button" className="btn-primary w-full" onClick={finish}>
             Finish setup

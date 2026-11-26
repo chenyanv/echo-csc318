@@ -1,5 +1,5 @@
 import type { ChatCompletionMessageParam } from "@mlc-ai/web-llm";
-import { GOALS, type Profile } from "../data/profiles";
+import { GOAL_SENTENCES, interestPhrase, type Profile } from "../data/profiles";
 
 /**
  * How an Echo turn is written.
@@ -29,8 +29,8 @@ const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 export function echoFacts(person: Profile): EchoFact[] {
   const n = person.name;
   return [
-    ...person.interests.map((i) => ({ kind: "interest" as const, value: i, statement: `${n} is really into ${lower(i)}.` })),
-    { kind: "goal", value: person.goal, statement: `${n} is looking for ${lower(GOALS[person.goal])}.` },
+    ...person.interests.map((i) => ({ kind: "interest" as const, value: i, statement: `${n} is really into ${interestPhrase(i)}.` })),
+    { kind: "goal", value: person.goal, statement: GOAL_SENTENCES[person.goal].about(n) },
     ...person.values.map((v) => ({ kind: "value" as const, value: v, statement: `${lower(v).replace(/^./, (c) => c.toUpperCase())} matters a lot to ${n}.` })),
     {
       kind: "pace",
@@ -50,16 +50,16 @@ export function nextFact(person: Profile, turnIndex: number, lastFromOther?: str
   // React only to an interest the other side newly stated ("is really into X"),
   // and only once, so the two Echoes don't bounce "too!" back and forth.
   const shared = person.interests.find(
-    (i) => said.includes(`really into ${i.toLowerCase()}`) && !mine.includes(i.toLowerCase()),
+    (i) => said.includes(`really into ${interestPhrase(i)}`) && !mine.includes(interestPhrase(i)),
   );
   if (shared) {
-    return { kind: "interest", value: shared, statement: `${person.name} is into ${lower(shared)} too!`, shared: true };
+    return { kind: "interest", value: shared, statement: `${person.name} is into ${interestPhrase(shared)} too!`, shared: true };
   }
   // Skip facts this Echo has already shared (e.g. one it reacted to with "too!").
   const facts = echoFacts(person);
   for (let k = 0; k < facts.length; k++) {
     const f = facts[(turnIndex + k) % facts.length];
-    if (f.kind !== "interest" || !mine.includes(f.value.toLowerCase())) return f;
+    if (f.kind !== "interest" || !mine.includes(interestPhrase(f.value))) return f;
   }
   return facts[turnIndex % facts.length];
 }
@@ -69,22 +69,24 @@ export function bankQuestion(fact: EchoFact, other: Profile, variant = 0, direct
   if (direct) {
     // Talking to the person themself (they joined), so "you" is clear.
     const bank: Record<FactKind, string[]> = {
-      interest: fact.shared ? ["What else are you into?"] : [`Are you into ${lower(fact.value)} too?`, "What do you like to do for fun?"],
-      goal: ["What are you hoping to find on here?"],
-      value: ["What matters most to you in a relationship?"],
-      pace: ["How do you feel about meeting up?"],
+      interest: fact.shared
+        ? ["What else are you into?", "What's something you've been enjoying lately?"]
+        : [`Are you into ${interestPhrase(fact.value)} too?`, "What do you like to do for fun?", "What does a good weekend look like for you?"],
+      goal: ["What are you hoping to find on here?", "What kind of connection are you looking for?"],
+      value: ["What matters most to you in a relationship?", "What's a green flag for you?", "What do you value in the people you're close to?"],
+      pace: ["How do you feel about meeting up?", "Do you like to text a lot, or meet sooner?"],
     };
     const options = bank[fact.kind];
     return options[variant % options.length];
   }
   const o = other.name;
   if (fact.shared) {
-    return [`What else is ${o} into?`, `How did ${o} get into ${lower(fact.value)}?`][variant % 2];
+    return [`What else is ${o} into?`, `How did ${o} get into ${interestPhrase(fact.value)}?`][variant % 2];
   }
   const bank: Record<FactKind, string[]> = {
-    interest: [`Is ${o} into ${lower(fact.value)} too?`, `What does ${o} like to do for fun?`],
+    interest: [`Is ${o} into ${interestPhrase(fact.value)} too?`, `What does ${o} like to do for fun?`, `What does a good weekend look like for ${o}?`],
     goal: [`What is ${o} hoping to find on here?`, `What kind of connection is ${o} looking for?`],
-    value: [`What matters most to ${o} in a relationship?`, `What's a green flag for ${o}?`],
+    value: [`What matters most to ${o} in a relationship?`, `What's a green flag for ${o}?`, `What does ${o} value most in a friend?`],
     pace: [`How does ${o} feel about meeting up?`, `Does ${o} like to text a lot or meet sooner?`],
   };
   const options = bank[fact.kind];
@@ -182,15 +184,15 @@ export function draftReply(me: Profile, match: Profile, mySidePast: string[]): {
   const shared = match.interests.find((i) => me.interests.includes(i) && !said.includes(i.toLowerCase()));
   if (shared) {
     return {
-      opening: `I saw you're into ${lower(shared)} too!`,
-      topic: `${me.name} and ${match.name} are both into ${lower(shared)}.`,
-      question: `How did you get into ${lower(shared)}?`,
+      opening: `I saw you're into ${interestPhrase(shared)} too!`,
+      topic: `${me.name} and ${match.name} are both into ${interestPhrase(shared)}.`,
+      question: `How did you get into ${interestPhrase(shared)}?`,
     };
   }
   const facts = echoFacts(match);
   const f = facts[mySidePast.length % facts.length];
   const question: Record<FactKind, string> = {
-    interest: `How did you get into ${lower(f.value)}?`,
+    interest: `How did you get into ${interestPhrase(f.value)}?`,
     goal: "What are you hoping to find on here?",
     value: "What matters most to you in a relationship?",
     pace: "How do you feel about meeting up?",

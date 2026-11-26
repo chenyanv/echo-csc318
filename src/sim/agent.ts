@@ -1,6 +1,6 @@
 import type { ChatCompletionMessageParam } from "@mlc-ai/web-llm";
 import { echoTurnsSinceHuman } from "../ai/echoTurns";
-import { GOALS, type Profile } from "../data/profiles";
+import { GOAL_SENTENCES, type Profile } from "../data/profiles";
 import { TIMES, getActivity } from "../data/planner";
 import { HUMAN_REPLIES, INVITE_RESPONSES } from "../data/scripts";
 import { formatDate, formatTime } from "../lib/format";
@@ -173,7 +173,7 @@ export function buildPrompt(
 
   const system = [
     `You are role-playing ${match.name}, a real person on the student dating app Echo. You are not an assistant. Never say you are an AI.`,
-    `About you: ${match.age}, ${match.year} ${match.program} at UofT, ${match.pronouns}. ${match.bio} Into ${match.interests.join(", ")}. Looking for ${GOALS[match.goal].toLowerCase()}. ${match.pace === "chat-first" ? "You like to chat a while before meeting." : "You'd rather meet soon."}`,
+    `About you: ${match.age}, ${match.year} ${match.program} at UofT, ${match.pronouns}. ${match.bio} Into ${match.interests.join(", ")}. ${GOAL_SENTENCES[match.goal].about("You").replace("You is", "You are")} ${match.pace === "chat-first" ? "You like to chat a while before meeting." : "You'd rather meet soon."}`,
     `Right now you are ${mind.mood}. You text in ${mind.texting}. ${mind.echoView}`,
     `You matched with ${me.name} (${me.year} ${me.program}, into ${me.interests.slice(0, 4).join(", ") || "lots of things"}).`,
     `How Echo works: each person has an AI assistant called Echo. In Echo chat, both people's Echoes chat for them using their profiles. It only runs if both people agree, and when either person joins, it ends for both.`,

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { canUseModel, generate, generateJson, useEchoStatus } from "../ai/useEcho";
-import { getMatch } from "../data/profiles";
+import { matchFor } from "../data/tailor";
 import { useFacilitatorSettings } from "../state/facilitator";
 import { useStore } from "../state/store";
 import type { Connection } from "../state/types";
@@ -83,7 +83,7 @@ export function Partner() {
     if (trigger.kind === "echo_invite" && settings.echoInvite === "manual") return;
     if (trigger.kind === "date_invite" && settings.dateInvite === "manual") return;
     const me = stateRef.current.me;
-    const match = getMatch(matchId);
+    const match = matchFor(stateRef.current, matchId);
     const started = Date.now();
     const typing = trigger.kind === "message" || trigger.kind === "ig_shared";
 

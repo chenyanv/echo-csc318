@@ -1,4 +1,5 @@
-import { BLANK_USER, MATCHES, SAMPLE_USER } from "../data/profiles";
+import { BLANK_USER, MATCHES, SAMPLE_USER, getMatch } from "../data/profiles";
+import { tailorMatch } from "../data/tailor";
 import { DEFAULT_PLAN } from "../data/planner";
 import { HUMAN_REPLIES } from "../data/scripts";
 import { initialState, makeId, newConnection } from "./reducer";
@@ -63,7 +64,7 @@ function onboarded(now: number): AppState {
 }
 
 function withAlex(state: AppState, fn: (c: Connection) => Connection): AppState {
-  return { ...state, connections: { ...state.connections, alex: fn(newConnection("alex")) } };
+  return { ...state, connections: { ...state.connections, alex: fn(newConnection("alex", tailorMatch(getMatch("alex"), state.me))) } };
 }
 
 export function buildPreset(key: PresetKey, now: number = Date.now()): AppState {

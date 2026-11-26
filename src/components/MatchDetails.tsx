@@ -16,14 +16,18 @@ export function MatchHeader({ match }: { match: Profile }) {
 }
 
 /**
- * "Why Echo suggested this person". Built from both profiles by rules, not by the AI,
- * and it says so, so people know these lines are facts rather than guesses.
+ * What the two profiles have in common, and where they differ. Built from both profiles by
+ * rules, not by the AI, and it says so, so people know these lines are facts rather than guesses.
+ * (Not "why Echo suggested them": the order of daily matches isn't based on these.)
  */
-export function MatchReasonBlock({ me, match }: { me: Profile; match: Profile }) {
+export function MatchReasonBlock({ me, match, hideTitle }: { me: Profile; match: Profile; hideTitle?: boolean }) {
   const r = buildMatchReason(me, match);
   return (
     <div className="space-y-5">
-      <Section title={`Why Echo suggested ${match.name}`} note="Based only on what you both wrote in your profiles.">
+      <Section
+        title={hideTitle ? undefined : `What you and ${match.name} have in common`}
+        note="Based only on what you both wrote in your profiles."
+      >
         {r.inCommon.length > 0 ? (
           <Bullets items={r.inCommon} tone="ok" />
         ) : (
@@ -65,11 +69,11 @@ export function InterestList({ me, match }: { me: Profile; match: Profile }) {
   );
 }
 
-function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
+function Section({ title, note, children }: { title?: string; note?: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="font-semibold">{title}</h3>
-      {note && <p className="mt-0.5 text-[13px] text-muted">{note}</p>}
+      {title && <h3 className="font-semibold">{title}</h3>}
+      {note && <p className={`${title ? "mt-0.5" : ""} text-[13px] text-muted`}>{note}</p>}
       <div className="mt-2">{children}</div>
     </section>
   );

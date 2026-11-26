@@ -11,6 +11,7 @@ import { MATCHES, type Profile } from "../data/profiles";
 import { usePartnerTyping } from "../sim/simStores";
 import { useStore } from "../state/store";
 import type { Connection } from "../state/types";
+import { matchFor } from "../data/tailor";
 
 /** Pause between turns so people can read along. */
 const ECHO_DELAY_MS = 1500;
@@ -18,7 +19,7 @@ const ECHO_DELAY_MS = 1500;
 export default function Chat() {
   const { id = "" } = useParams();
   const { state } = useStore();
-  const match = MATCHES.find((m) => m.id === id);
+  const match = (MATCHES.some((m) => m.id === id) ? matchFor(state, id) : undefined);
   const conn = match ? state.connections[match.id] : undefined;
 
   if (!match || !conn) return <Navigate to="/chats" replace />;

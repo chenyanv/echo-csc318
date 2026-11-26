@@ -9,11 +9,12 @@ import { formatDate, formatTime, isPast } from "../lib/format";
 import { isoDate } from "../state/presets";
 import { useStore } from "../state/store";
 import type { Connection, DatePlan } from "../state/types";
+import { matchFor } from "../data/tailor";
 
 export default function DatePlanner() {
   const { id = "" } = useParams();
   const { state } = useStore();
-  const match = MATCHES.find((m) => m.id === id);
+  const match = (MATCHES.some((m) => m.id === id) ? matchFor(state, id) : undefined);
   const conn = match ? state.connections[match.id] : undefined;
   if (!match || !conn) return <Navigate to="/chats" replace />;
   if (conn.decision.kind !== "accepted") return <Navigate to={`/match/${match.id}`} replace />;

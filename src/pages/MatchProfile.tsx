@@ -9,11 +9,12 @@ import { cleanHandle } from "../lib/instagram";
 import { isMatchNotified, isUndoable } from "../state/reducer";
 import { useNow, useStore } from "../state/store";
 import { formatDate, formatTime, isPast } from "../lib/format";
+import { matchFor } from "../data/tailor";
 
 export default function MatchProfile() {
   const { id = "" } = useParams();
   const { state, dispatch } = useStore();
-  const match = MATCHES.find((m) => m.id === id);
+  const match = (MATCHES.some((m) => m.id === id) ? matchFor(state, id) : undefined);
   const conn = match ? state.connections[match.id] : undefined;
   const d = conn?.decision;
   const now = useNow(d?.kind === "declined");
@@ -116,9 +117,9 @@ export default function MatchProfile() {
       <InstagramPanel match={match} />
 
       <details className="card mt-4 p-5">
-        <summary className="cursor-pointer font-semibold">Why Echo suggested {match.name}</summary>
-        <div className="mt-4">
-          <MatchReasonBlock me={state.me} match={match} />
+        <summary className="cursor-pointer font-semibold">What you and {match.name} have in common</summary>
+        <div className="mt-3">
+          <MatchReasonBlock me={state.me} match={match} hideTitle />
         </div>
       </details>
 

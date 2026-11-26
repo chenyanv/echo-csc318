@@ -1,7 +1,7 @@
 import type { Profile } from "../data/profiles";
 
 /** Bump when the shape changes so stale localStorage is discarded. */
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 /** Undo window for "Not for me" and "Decline" (A2 finding 2). */
 export const UNDO_MS = 10_000;
@@ -73,6 +73,8 @@ export interface Reflection {
 
 export interface Connection {
   matchId: string;
+  /** The match as built around the participant when they met (see data/tailor.ts). Fixed from then on. */
+  profile?: Profile;
   decision: MatchDecision;
   messages: ChatMessage[];
   echo: EchoStatus;

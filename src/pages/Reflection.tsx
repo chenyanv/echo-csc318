@@ -6,6 +6,7 @@ import { MATCHES } from "../data/profiles";
 import { formatDate } from "../lib/format";
 import { useStore } from "../state/store";
 import type { Feeling } from "../state/types";
+import { matchFor } from "../data/tailor";
 
 const FEELINGS: { value: Feeling; label: string; hint: string }[] = [
   { value: "yes", label: "Yes", hint: "I'd like to see them again" },
@@ -20,7 +21,7 @@ const FEELINGS: { value: Feeling; label: string; hint: string }[] = [
 export default function Reflection() {
   const { id = "" } = useParams();
   const { state, dispatch } = useStore();
-  const match = MATCHES.find((m) => m.id === id);
+  const match = (MATCHES.some((m) => m.id === id) ? matchFor(state, id) : undefined);
   const conn = match ? state.connections[match.id] : undefined;
   const [feeling, setFeeling] = useState<Feeling | undefined>(conn?.reflection.feeling);
   const [note, setNote] = useState(conn?.reflection.note ?? "");

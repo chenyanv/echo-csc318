@@ -66,7 +66,7 @@ Open **Profile → For researchers → Facilitator panel**, or go to `/facilitat
 src/
   ai/          on-device model (WebLLM worker), Echo turn logic, prompts
   components/  shell, chat bubbles, shared UI
-  data/        fictional profiles, planner options, scripted lines
+  data/        fictional profiles (built around each participant, see tailor.ts), planner options, scripted lines
   lib/         match reasons, calendar export, formatting
   pages/       one file per screen
   sim/         user simulator for the match (persona, ReAct-style step, script fallback)

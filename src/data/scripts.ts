@@ -20,7 +20,7 @@ export const HUMAN_REPLIES: Record<string, string[]> = {
     "honestly I'm down to meet whenever, coffee this week?",
   ],
   priya: [
-    "hi! love that you like museums too",
+    "hi! your profile made me smile",
     "have you been to the AGO's new exhibit yet?",
     "I'm a slow texter sorry 😅 but I'm interested",
   ],

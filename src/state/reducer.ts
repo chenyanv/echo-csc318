@@ -1,4 +1,5 @@
 import { getMatch, type Profile } from "../data/profiles";
+import { tailorMatch } from "../data/tailor";
 import { HUMAN_REPLIES, INVITE_RESPONSES } from "../data/scripts";
 import {
   STATE_VERSION,
@@ -58,9 +59,10 @@ function msg(sender: Sender, text: string, now: number, demo?: boolean): ChatMes
   return demo ? { id: makeId(now), sender, text, at: now, demo } : { id: makeId(now), sender, text, at: now };
 }
 
-export function newConnection(matchId: string): Connection {
+export function newConnection(matchId: string, profile?: Profile): Connection {
   return {
     matchId,
+    ...(profile ? { profile } : {}),
     decision: { kind: "pending" },
     messages: [],
     echo: { kind: "off" },
@@ -71,7 +73,8 @@ export function newConnection(matchId: string): Connection {
 }
 
 function updateConnection(state: AppState, matchId: string, fn: (c: Connection) => Connection): AppState {
-  const current = state.connections[matchId] ?? newConnection(matchId);
+  // A new connection keeps a snapshot of the match as built around the participant right now.
+  const current = state.connections[matchId] ?? newConnection(matchId, tailorMatch(getMatch(matchId), state.me));
   const next = fn(current);
   if (next === current) return state;
   return { ...state, connections: { ...state.connections, [matchId]: next } };

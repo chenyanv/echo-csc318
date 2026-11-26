@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import { EchoMark } from "../components/EchoMark";
 import { EchoSetupCard } from "../components/EchoSetupCard";
 import { Avatar } from "../components/ui/Avatar";
-import { getMatch } from "../data/profiles";
 import { newConnection, todayMatchId } from "../state/reducer";
 import { useStore } from "../state/store";
+import { matchFor } from "../data/tailor";
 
 function greeting(hour: number) {
   if (hour < 12) return "Good morning";
@@ -15,7 +15,7 @@ function greeting(hour: number) {
 export default function Home() {
   const { state } = useStore();
   const todayId = todayMatchId(state);
-  const today = getMatch(todayId);
+  const today = matchFor(state, todayId);
   const todayConn = state.connections[todayId] ?? newConnection(todayId);
   const matched = Object.values(state.connections).filter((c) => c.decision.kind === "accepted");
 
@@ -42,7 +42,7 @@ export default function Home() {
       ) : (
         <ul className="mt-3 space-y-2">
           {matched.map((c) => {
-            const m = getMatch(c.matchId);
+            const m = matchFor(state, c.matchId);
             const last = [...c.messages].reverse().find((x) => x.sender !== "system");
             return (
               <li key={c.matchId}>

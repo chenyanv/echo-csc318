@@ -2,14 +2,14 @@ import { Link, Navigate } from "react-router-dom";
 import { InterestList, MatchHeader, MatchReasonBlock } from "../components/MatchDetails";
 import { UndoBar } from "../components/ui/UndoBar";
 import { Avatar } from "../components/ui/Avatar";
-import { getMatch } from "../data/profiles";
 import { isUndoable, newConnection, todayMatchId } from "../state/reducer";
 import { useNow, useStore } from "../state/store";
+import { matchFor } from "../data/tailor";
 
 export default function Today() {
   const { state, dispatch } = useStore();
   const matchId = todayMatchId(state);
-  const match = getMatch(matchId);
+  const match = matchFor(state, matchId);
   const conn = state.connections[matchId] ?? newConnection(matchId);
   const d = conn.decision;
   const now = useNow(d.kind === "passed");
@@ -68,7 +68,7 @@ export default function Today() {
         <MatchReasonBlock me={state.me} match={match} />
       </article>
 
-      <div className="sticky bottom-0 -mx-4 -mb-6 mt-5 grid grid-cols-2 gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur">
+      <div className="sticky -bottom-6 -mx-4 -mb-6 mt-5 grid grid-cols-2 gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur">
         <button type="button" className="btn-secondary" onClick={() => dispatch({ type: "MATCH_PASS", matchId, now: Date.now() })}>
           Not for me
         </button>
@@ -91,7 +91,7 @@ export function RecentlyPassed() {
       <p className="mt-0.5 text-sm text-muted">Passing doesn't notify anyone. You can bring someone back.</p>
       <ul className="mt-3 space-y-2">
         {passed.map((c) => {
-          const m = getMatch(c.matchId);
+          const m = matchFor(state, c.matchId);
           return (
             <li key={c.matchId} className="card flex items-center gap-3 p-3">
               <Avatar profile={m} size="sm" />
