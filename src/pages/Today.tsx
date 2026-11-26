@@ -56,7 +56,7 @@ export default function Today() {
         </span>
       </div>
 
-      <article className="card mt-4 p-5 md:p-6">
+      <article className="card mt-4 p-5">
         <MatchHeader match={match} />
         <p className="mt-4 text-[15px] leading-relaxed">{match.bio}</p>
 
@@ -68,7 +68,7 @@ export default function Today() {
         <MatchReasonBlock me={state.me} match={match} />
       </article>
 
-      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] -mx-4 mt-5 grid grid-cols-2 gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+      <div className="sticky bottom-0 -mx-4 -mb-6 mt-5 grid grid-cols-2 gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur">
         <button type="button" className="btn-secondary" onClick={() => dispatch({ type: "MATCH_PASS", matchId, now: Date.now() })}>
           Not for me
         </button>

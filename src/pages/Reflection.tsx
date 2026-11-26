@@ -54,14 +54,14 @@ export default function Reflection() {
         {getActivity(plan.activityId).label} · {formatDate(plan.date)}
       </p>
 
-      <div className="card mt-6 p-5 md:p-6">
+      <div className="card mt-6 p-5">
         <div className="flex items-center gap-2 text-[13px] font-medium text-muted">
           <LockIcon /> Private. Only you can see this. {match.name} never sees your answers or notes.
         </div>
 
         <fieldset className="mt-5">
           <legend className="font-semibold">Would you like to see {match.name} again?</legend>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3" role="radiogroup">
+          <div className="mt-3 grid gap-2" role="radiogroup">
             {FEELINGS.map((f) => (
               <button
                 key={f.value}
@@ -98,7 +98,7 @@ export default function Reflection() {
           />
         </label>
 
-        <button type="button" className="btn-primary mt-4 w-full sm:w-auto" onClick={save} disabled={!feeling && !note.trim()}>
+        <button type="button" className="btn-primary mt-4 w-full" onClick={save} disabled={!feeling && !note.trim()}>
           {saved ? "Saved" : "Save privately"}
         </button>
         {saved && (
@@ -109,7 +109,7 @@ export default function Reflection() {
       </div>
 
       {saved && feeling && (
-        <div className="card mt-4 p-5 md:p-6">
+        <div className="card mt-4 p-5">
           <h2 className="font-semibold">What would you like to do next?</h2>
           <p className="mt-1 text-sm text-muted">Up to you. Nothing happens unless you choose it.</p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -135,7 +135,7 @@ export default function Reflection() {
         </div>
       )}
 
-      <div className="card mt-4 p-5 md:p-6">
+      <div className="card mt-4 p-5">
         <h2 className="font-semibold">Send {match.name} a message</h2>
         <p className="mt-1 text-sm text-muted">This goes to your chat with {match.name}, written by you, not Echo.</p>
         {sent ? (

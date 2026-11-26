@@ -118,9 +118,9 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
     dispatch({ type, matchId: match.id, who: "me", now: Date.now() });
 
   return (
-    <section className="flex min-h-[calc(100dvh-9rem)] flex-col md:min-h-[calc(100dvh-5.5rem)]">
+    <section className="flex min-h-0 flex-1 flex-col">
       {/* Header: who is speaking on each side, always visible */}
-      <div className="sticky top-0 z-10 -mx-4 border-b border-line bg-canvas/95 px-4 pb-3 backdrop-blur md:-mx-8 md:px-8">
+      <div className="shrink-0 border-b border-line bg-canvas px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-3">
         <div className="flex items-center gap-2">
           <BackButton to="/chats" label="" />
           <Link to={`/match/${match.id}`} className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -131,13 +131,13 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
             Plan a date
           </Link>
         </div>
-        <div className="mt-2 flex flex-wrap gap-2" aria-label="Who is speaking">
+        <div className="mt-2 flex flex-wrap gap-2 pl-1" aria-label="Who is speaking">
           <ModePill who="You" mode={modes.me} />
           <ModePill who={match.name} mode={modes.them} />
         </div>
       </div>
 
-      <div className="flex-1 space-y-4 pt-4" aria-live="polite">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4" aria-live="polite">
         {conn.messages.length === 0 && (
           <p className="py-8 text-center text-[15px] text-muted">
             You matched with {match.name}. Say hi, or ask to use Echo chat if you'd like a hand getting started.
@@ -160,7 +160,7 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] -mx-4 mt-4 border-t border-line bg-canvas/95 px-4 pt-3 pb-3 backdrop-blur md:bottom-0 md:-mx-8 md:px-8">
+      <div className="shrink-0 border-t border-line bg-canvas px-4 pt-3 pb-3">
         {conn.echo.kind === "invited" && conn.echo.by === "them" && (
           <div className="mb-3 rounded-2xl border border-echo/25 bg-echo-soft p-4">
             <p className="font-semibold text-echo-strong">{match.name} asked to use Echo chat</p>
@@ -227,12 +227,12 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
               )}
               {echoOn && (
                 <>
-                  <span className="text-muted">You're typing as yourself.</span>
+                  <span className="text-muted">Typing as you.</span>
                   <button type="button" className="font-medium text-echo hover:underline" onClick={() => act("ECHO_RESUME")}>
-                    Hand back to your Echo
+                    Hand back to Echo
                   </button>
                   <button type="button" className="font-medium text-muted underline" onClick={() => act("ECHO_TURN_OFF")}>
-                    Turn off Echo chat
+                    Turn off
                   </button>
                 </>
               )}

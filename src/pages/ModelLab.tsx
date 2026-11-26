@@ -120,7 +120,7 @@ export default function ModelLab() {
 
       <div className="card p-5">
         <h2 className="font-semibold">1. Pick a model</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid gap-3">
           {CANDIDATE_MODELS.map((m) => (
             <ModelOption
               key={m.key}

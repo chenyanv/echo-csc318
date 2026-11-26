@@ -4,6 +4,7 @@ import { Chip } from "../../components/ui/Chip";
 import { BackButton } from "../../components/ui/PageHeader";
 import { GOALS, INTERESTS, PACES, VALUES, type Goal, type Interest, type Pace, type Value } from "../../data/profiles";
 import { cleanHandle } from "../../lib/instagram";
+import { scrollPageToTop } from "../../components/PhoneFrame";
 import { useStore } from "../../state/store";
 
 const PRONOUNS = ["she/her", "he/him", "they/them"];
@@ -44,7 +45,7 @@ export default function Setup() {
   function next() {
     if (step < steps.length - 1) {
       setStep(step + 1);
-      window.scrollTo({ top: 0 });
+      scrollPageToTop();
       return;
     }
     const handle = cleanHandle(instagram);

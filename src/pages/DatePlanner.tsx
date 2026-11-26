@@ -73,7 +73,7 @@ function PlanForm({ match, conn }: { match: Profile; conn: Connection }) {
           : suggestionReason(state.me, match)}
       </p>
 
-      <div className="card mt-6 space-y-5 p-5 md:p-6">
+      <div className="card mt-6 space-y-5 p-5">
         <Field label="Activity">
           <Select value={activityId} onChange={changeActivity} label="Activity">
             {ACTIVITIES.map((a) => (
@@ -158,7 +158,7 @@ function PlanStatus({ match, plan }: { match: Profile; plan: DatePlan }) {
         {plan.status === "confirmed" ? (happened ? `Your date with ${match.name}` : "Upcoming date") : "Your invite"}
       </h1>
 
-      <article className="card mt-5 p-5 md:p-6">
+      <article className="card mt-5 p-5">
         <span className={`inline-flex rounded-full px-2.5 py-1 text-[12px] font-semibold ${badge.cls}`}>{badge.text}</span>
         <dl className="mt-4 space-y-3 text-[15px]">
           <Row label="What">{activity.label}</Row>
@@ -205,7 +205,7 @@ function PlanStatus({ match, plan }: { match: Profile; plan: DatePlan }) {
       )}
 
       {plan.status === "counter" && (
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="mt-5 grid gap-3">
           <button type="button" className="btn-primary" onClick={() => dispatch({ type: "PLAN_ACCEPT_COUNTER", matchId: match.id, now: Date.now() })}>
             Accept {plan.counter?.time ? formatTime(plan.counter.time) : "change"}
           </button>

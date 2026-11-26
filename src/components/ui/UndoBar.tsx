@@ -19,7 +19,7 @@ export function UndoBar({
   return (
     <div
       role="status"
-      className="fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl bg-ink px-4 py-3 text-white shadow-lg md:bottom-8"
+      className="absolute inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-2xl bg-ink px-4 py-3 text-white shadow-lg"
     >
       <span className="text-[15px]">{message}</span>
       <button type="button" onClick={onUndo} className="min-h-10 shrink-0 rounded-full bg-white/15 px-4 text-sm font-semibold hover:bg-white/25">

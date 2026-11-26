@@ -100,7 +100,7 @@ export default function MatchProfile() {
       </div>
       <p className="mt-2 text-center text-[13px] text-muted">No rush. Chat as long as you like before planning anything.</p>
 
-      <article className="card mt-6 space-y-6 p-5 md:p-6">
+      <article className="card mt-6 space-y-6 p-5">
         <p className="text-[15px] leading-relaxed">{match.bio}</p>
         <div className="space-y-4">
           {match.prompts.map((p) => (
@@ -115,7 +115,7 @@ export default function MatchProfile() {
 
       <InstagramPanel match={match} />
 
-      <details className="card mt-4 p-5 md:p-6">
+      <details className="card mt-4 p-5">
         <summary className="cursor-pointer font-semibold">Why Echo suggested {match.name}</summary>
         <div className="mt-4">
           <MatchReasonBlock me={state.me} match={match} />
@@ -170,7 +170,7 @@ function InstagramPanel({ match }: { match: Profile }) {
   }
 
   return (
-    <div className="card mt-4 p-5 md:p-6">
+    <div className="card mt-4 p-5">
       <h3 className="font-semibold">Instagram</h3>
       <p className="mt-0.5 text-sm text-muted">Swap handles if you'd like to keep in touch outside Echo.</p>
 

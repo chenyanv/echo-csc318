@@ -21,12 +21,12 @@ export default function Home() {
 
   return (
     <section>
-      <header className="flex items-center gap-2 md:hidden">
+      <header className="flex items-center gap-2">
         <EchoMark className="size-7" />
         <span className="text-lg font-semibold tracking-tight">Echo</span>
       </header>
 
-      <h1 className="mt-6 text-[28px] leading-tight font-semibold tracking-tight md:mt-0">
+      <h1 className="mt-6 text-[28px] leading-tight font-semibold tracking-tight">
         {greeting(new Date().getHours())}, {state.me.name}
       </h1>
 

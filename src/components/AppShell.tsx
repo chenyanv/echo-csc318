@@ -1,6 +1,7 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useMatch } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
-import { EchoMark } from "./EchoMark";
+import { PhoneFrame } from "./PhoneFrame";
 
 interface NavItem {
   to: string;
@@ -57,46 +58,35 @@ const NAV: NavItem[] = [
 ];
 
 /**
- * Responsive shell:
- * - phones: content fills the screen, labelled tab bar at the bottom
- * - md and up: labelled sidebar on the left, content in a readable column
+ * Phone-sized shell: pages scroll inside the frame, the labelled tab bar is pinned at the bottom.
+ * The chat screen manages its own scrolling (header, messages, composer), so it gets no padding.
  */
 export default function AppShell() {
-  return (
-    <div className="min-h-full md:flex">
-      <aside className="hidden md:sticky md:top-0 md:flex md:h-dvh md:w-60 md:shrink-0 md:flex-col md:border-r md:border-line md:bg-surface md:px-4 md:py-6">
-        <div className="mb-8 flex items-center gap-2 px-2">
-          <EchoMark className="size-8" />
-          <span className="text-xl font-semibold tracking-tight">Echo</span>
-        </div>
-        <nav className="flex flex-col gap-1" aria-label="Main">
-          {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors ${
-                  isActive ? "bg-accent-soft text-accent-strong" : "text-muted hover:bg-canvas hover:text-ink"
-                }`
-              }
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
+  const { pathname } = useLocation();
+  const isChat = Boolean(useMatch("/chats/:id"));
+  const scrollRef = useRef<HTMLElement>(null);
 
-      <main className="mx-auto w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-28 md:px-8 md:pt-10 md:pb-12">
+  // Each new screen starts at the top.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [pathname]);
+
+  return (
+    <PhoneFrame>
+      <main
+        id="scroll-root"
+        ref={scrollRef}
+        className={
+          isChat
+            ? "flex min-h-0 flex-1 flex-col"
+            : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-6"
+        }
+      >
         <Outlet />
       </main>
 
-      <nav
-        aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
-      >
-        <ul className="mx-auto grid max-w-md grid-cols-4">
+      <nav aria-label="Main" className="z-20 shrink-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
+        <ul className="grid grid-cols-4">
           {NAV.map((item) => (
             <li key={item.to}>
               <NavLink
@@ -115,6 +105,6 @@ export default function AppShell() {
           ))}
         </ul>
       </nav>
-    </div>
+    </PhoneFrame>
   );
 }
