@@ -17,7 +17,7 @@ export default function QuickChat() {
   const ai = useEchoStatus();
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<string | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const messages = state.quickChat.messages;
   const answers = messages.filter((m) => m.sender === "me").length;
@@ -34,14 +34,20 @@ export default function QuickChat() {
     dispatch({ type: "QUICK_CHAT_ADD", sender: "myEcho", text: opener, now: Date.now() });
   }, [dispatch, messages.length, opener]);
 
+  // Keep the newest message in view. Scroll the page itself to the very bottom: scrolling the
+  // last message "into view" would leave it hidden behind the pinned reply bar.
+  const streaming = pending !== null && pending.length > 0;
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, pending]);
+    const root = document.getElementById("scroll-root");
+    root?.scrollTo({ top: root.scrollHeight, behavior: streaming ? "auto" : "smooth" });
+  }, [messages.length, pending, streaming]);
 
   async function send() {
     const text = draft.trim();
     if (!text || busy) return;
     setDraft("");
+    // Clicking Send moves focus to the button; put it back so the next answer can be typed straight away.
+    inputRef.current?.focus();
     dispatch({ type: "QUICK_CHAT_ADD", sender: "me", text, now: Date.now() });
 
     if (answers + 1 >= ANSWERS_TO_FINISH) {
@@ -113,7 +119,6 @@ export default function QuickChat() {
           <MessageBubble key={m.id} message={m} echoLabel="Echo" echoOnLeft />
         ))}
         {pending !== null && <MessageBubble message={{ sender: "myEcho", text: pending }} echoLabel="Echo" echoOnLeft streaming />}
-        <div ref={bottomRef} />
       </div>
 
       {/* Pinned to the very bottom of the frame: the negative offset and margin cancel the page's bottom padding,
@@ -137,7 +142,9 @@ export default function QuickChat() {
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Reply to Echo"
               aria-label="Reply to Echo"
-              disabled={busy}
+              ref={inputRef}
+              // Not disabled while Echo replies: a disabled field loses focus (and the phone keyboard).
+              // You can type your next answer; Send waits until Echo has finished.
               maxLength={300}
             />
             <button className="btn-primary" disabled={busy || !draft.trim()}>

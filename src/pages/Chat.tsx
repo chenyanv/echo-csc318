@@ -41,6 +41,7 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   const [tick, setTick] = useState(0);
   const busy = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const echoOn = conn.echo.kind === "on";
   // Your setup-chat answers: a tone sample for your Echo's wording (never repeated as facts).
@@ -95,6 +96,8 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
     dispatch({ type: "SEND_MESSAGE", matchId: match.id, text: draft, now: Date.now(), assisted });
     setDraft("");
     setAssisted(false);
+    // Clicking Send moves focus to the button; keep typing in the message field.
+    inputRef.current?.focus();
   }
 
   /** Echo drafts a reply into the composer. Nothing is sent until you press Send. */
@@ -110,6 +113,8 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
     setDraft([d.opening, question].filter(Boolean).join(" "));
     setAssisted(true);
     setDrafting(false);
+    // Ready to edit the draft right away.
+    inputRef.current?.focus();
   }
 
   const act = (type: "ECHO_TAKEOVER" | "ECHO_TURN_OFF") =>
@@ -232,6 +237,7 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
             </div>
             <form className="flex items-end gap-2" onSubmit={send}>
               <input
+                ref={inputRef}
                 className="field flex-1"
                 value={draft}
                 onChange={(e) => {
