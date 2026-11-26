@@ -25,7 +25,7 @@ const START_ROUTES: Record<PresetKey, string> = {
 /**
  * Facilitator panel for A3 sessions: reset to a task's starting state, play the
  * match's side by hand, choose how the match responds, and export the session log.
- * Reached from Profile → For researchers, or /facilitator.
+ * Reached at /facilitator (not linked from the app, so participants don't stumble on it).
  */
 export default function Facilitator() {
   const navigate = useNavigate();

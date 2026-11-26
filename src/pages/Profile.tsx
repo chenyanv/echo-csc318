@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Avatar } from "../components/ui/Avatar";
 import { Chip } from "../components/ui/Chip";
 import { PageTitle } from "../components/ui/PageHeader";
@@ -9,7 +9,7 @@ import { removeEchoFromDevice, useEchoStatus, ECHO_DOWNLOAD_MB } from "../ai/use
 import { modelExpiresAt, modelSavedAt, MODEL_TTL_DAYS } from "../ai/modelCache";
 
 export default function Profile() {
-  const { state, loadPreset } = useStore();
+  const { state } = useStore();
   const navigate = useNavigate();
   const me = state.me;
 
@@ -40,30 +40,6 @@ export default function Profile() {
 
       <EchoOnDevice />
 
-      <div className="card mt-4 p-5">
-        <p className="font-semibold">For researchers</p>
-        <p className="mt-1 text-sm text-muted">Tools for running study sessions.</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link to="/facilitator" className="btn-secondary">
-            Facilitator panel
-          </Link>
-          <Link to="/lab" className="btn-secondary">
-            AI model lab
-          </Link>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => {
-              if (confirm("Reset the prototype? This clears your profile, matches and chats on this device.")) {
-                loadPreset("fresh");
-                navigate("/welcome", { replace: true });
-              }
-            }}
-          >
-            Reset prototype
-          </button>
-        </div>
-      </div>
     </section>
   );
 }

@@ -36,7 +36,7 @@ Nothing is sent to a server.
 
 ## Running a study session
 
-Open **Profile → For researchers → Facilitator panel**, or go to `/facilitator`.
+Go to `/facilitator` (e.g. https://echo-csc318.vercel.app/facilitator). It isn't linked from the app, so participants won't find it. The model lab is at `/lab`, and *New user* in the panel resets the prototype.
 
 1. **Before the participant arrives:** click *Load model* so they don't wait for the download.
 2. **Start a task:** pick New user or T1–T5. This resets the device to that task's starting state and
