@@ -3,7 +3,7 @@ import { buildMatchReason } from "../lib/matchReason";
 import { Avatar } from "./ui/Avatar";
 
 export function MatchHeader({ match }: { match: Profile }) {
-  const meta = [match.pronouns, String(match.age), [match.program, match.year].filter(Boolean).join(", ")].filter(Boolean);
+  const meta = [match.pronouns, [match.program, match.year].filter(Boolean).join(", ")].filter(Boolean);
   return (
     <div className="flex items-center gap-4">
       <Avatar profile={match} size="lg" />
