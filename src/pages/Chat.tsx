@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { generate, useEchoStatus } from "../ai/useEcho";
-import { acknowledgement, bankQuestion, draftReply, nextFact, questionPrompt, validateQuestion } from "../ai/echoCompose";
+import { acknowledgement, bankQuestion, draftReply, nextFact, questionPrompt, toneSamples, validateQuestion } from "../ai/echoCompose";
 import { ECHO_TURNS_PER_ROUND, echoTurnsSinceHuman, nextEchoSpeaker, type EchoSpeaker } from "../ai/echoTurns";
 import { MessageBubble, TypingDots } from "../components/chat/MessageBubble";
 import { Avatar } from "../components/ui/Avatar";
@@ -42,6 +42,8 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const echoOn = conn.echo.kind === "on";
+  // Your setup-chat answers: a tone sample for your Echo's wording (never repeated as facts).
+  const myTone = toneSamples(state.quickChat.messages.filter((m) => m.sender === "me").map((m) => m.text));
   const roundLimit = ECHO_TURNS_PER_ROUND * (extraRounds + 1);
   const pausedForCatchUp = echoOn && echoTurnsSinceHuman(conn) >= roundLimit;
   // The match's side (typing as themself) is played by the Partner simulator.
@@ -72,7 +74,8 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
       const statement = acknowledgement(turn, Boolean(lastFromOther), speaker === "myEcho" ? 1 : 0) + fact.statement;
       setPendingEcho({ speaker, text: statement });
       // Not streamed: the question is only shown after it passes validation.
-      const raw = await generate(questionPrompt(self, other, fact.statement, lastFromOther), undefined, 40, 0.5);
+      const tone = speaker === "myEcho" ? myTone : [];
+      const raw = await generate(questionPrompt(self, other, fact.statement, lastFromOther, false, tone), undefined, 40, 0.5);
       const question = (raw && validateQuestion(raw, self, other)) || bankQuestion(fact, other, turn);
       const text = `${statement} ${question}`;
       setPendingEcho(null);
@@ -101,7 +104,7 @@ function Conversation({ match, conn }: { match: Profile; conn: Connection }) {
     const mine = conn.messages.filter((m) => m.sender === "me" || m.sender === "myEcho").map((m) => m.text);
     const lastFromThem = [...conn.messages].reverse().find((m) => m.sender === "them")?.text;
     const d = draftReply(state.me, match, mine);
-    const raw = await generate(questionPrompt(state.me, match, d.topic, lastFromThem, true), undefined, 40, 0.6);
+    const raw = await generate(questionPrompt(state.me, match, d.topic, lastFromThem, true, myTone), undefined, 40, 0.6);
     const question = (raw && validateQuestion(raw, state.me, match, true)) || d.question;
     setDraft([d.opening, question].filter(Boolean).join(" "));
     setAssisted(true);

@@ -98,6 +98,19 @@ export function acknowledgement(turnIndex: number, hasPrevious: boolean, offset 
   return hasPrevious ? OPENERS[(turnIndex * 2 + offset) % OPENERS.length] + " " : "Hi! ";
 }
 
+/**
+ * What the person typed in the setup chat, used only as a tone sample for their Echo's
+ * wording. The validator still blocks any statement about them, so nothing here can be
+ * repeated as a fact.
+ */
+export function toneSamples(texts: string[]): string[] {
+  return texts
+    .map((t) => t.trim().replace(/\s+/g, " "))
+    .filter((t) => t.length >= 2)
+    .slice(0, 3)
+    .map((t) => (t.length > 140 ? t.slice(0, 140) + "…" : t));
+}
+
 /** Prompt that asks the model for one follow-up question and nothing else. */
 export function questionPrompt(
   speakerFor: Profile,
@@ -105,6 +118,8 @@ export function questionPrompt(
   statement: string,
   lastFromOther?: string,
   direct = false,
+  /** How the represented person texts (from the setup chat), for tone only. */
+  tone: string[] = [],
 ): ChatCompletionMessageParam[] {
   return [
     {
@@ -115,8 +130,13 @@ export function questionPrompt(
         direct
           ? `You are talking to ${other.name} directly, so address them as "you". Do not say anything about ${speakerFor.name}.`
           : `Ask about ${other.name}, using the name "${other.name}". Do not say anything about ${speakerFor.name}.`,
+        tone.length
+          ? `Match the tone of how ${speakerFor.name} texts (casual or formal, short or long). Tone only: don't mention anything from these. ${tone.map((t) => `"${t}"`).join(" / ")}`
+          : "",
         "Reply with the question only, under 15 words. No quotes, no emojis.",
-      ].join(" "),
+      ]
+        .filter(Boolean)
+        .join(" "),
     },
     { role: "user", content: lastFromOther ? `The last message was: "${lastFromOther}"` : "Write the question." },
   ];
@@ -146,7 +166,8 @@ export function validateQuestion(raw: string, speakerFor: Profile, other: Profil
   } else if (!/\b(you|your)\b/i.test(q)) {
     return null;
   }
-  if (new RegExp(`\\b${speakerFor.name}\\b`, "i").test(q)) return null;
+  // (An empty name would match everything, so only check a real one.)
+  if (speakerFor.name.trim() && new RegExp(`\\b${speakerFor.name}\\b`, "i").test(q)) return null;
   return q.charAt(0).toUpperCase() + q.slice(1);
 }
 

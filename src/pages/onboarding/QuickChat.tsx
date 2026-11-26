@@ -95,9 +95,13 @@ export default function QuickChat() {
       <header className="mt-2">
         <p className="text-[13px] font-medium text-echo">Last step · Setup chat</p>
         <h1 className="mt-1 text-[26px] font-semibold tracking-tight">Chat with Echo</h1>
-        <p className="mt-2 rounded-xl bg-echo-soft px-3 py-2 text-sm text-echo-strong">
-          You're talking to Echo, an AI, not a person. Nothing here is shared with matches.
-        </p>
+        <div className="mt-2 rounded-xl bg-echo-soft px-3 py-2.5 text-sm text-echo-strong">
+          <p>
+            <span className="font-semibold">This sets up your Echo,</span> the AI that can chat for you in Echo chat or
+            draft a reply. It only does that when you choose to use it.
+          </p>
+          <p className="mt-1">You're talking to an AI, not a person. Nothing here is shared with matches.</p>
+        </div>
       </header>
 
       <div className="mt-4">

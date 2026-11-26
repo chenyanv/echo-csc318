@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { echoTurnsSinceHuman, nextEchoSpeaker } from "./echoTurns";
-import { bankQuestion, draftReply, echoFacts, nextFact, validateQuestion } from "./echoCompose";
+import { bankQuestion, draftReply, echoFacts, nextFact, questionPrompt, toneSamples, validateQuestion } from "./echoCompose";
 import { reducer } from "../state/reducer";
 import { buildPreset } from "../state/presets";
 import { getMatch, SAMPLE_USER } from "../data/profiles";
@@ -108,5 +108,25 @@ describe("validating the model's question", () => {
     expect(validateQuestion("How does Alex get their coffee fix?", sam, alex)).toBeNull();
     expect(validateQuestion("What does Alex like about his job?", sam, alex)).toBeNull();
     expect(validateQuestion("What's the best café near campus?", sam, alex)).toBeNull();
+  });
+});
+
+describe("setup chat answers", () => {
+  it("are passed to the model as tone only", () => {
+    const tone = toneSamples(["  usually gym then   ramen lol ", "x", "long walks"]);
+    expect(tone).toEqual(["usually gym then ramen lol", "long walks"]);
+    const system = String(questionPrompt(sam, alex, "Sam is really into hiking.", undefined, true, tone)[0].content);
+    expect(system).toContain('"usually gym then ramen lol"');
+    expect(system).toContain("Tone only");
+    expect(String(questionPrompt(sam, alex, "x")[0].content)).not.toContain("tone");
+  });
+
+  it("works for someone who hasn't entered a name yet", () => {
+    expect(validateQuestion("What got you into bouldering?", { ...sam, name: "" }, alex, true)).toBe("What got you into bouldering?");
+  });
+
+  it("still can't be stated as facts about the person", () => {
+    // Whatever the model picks up from the samples, a statement about Sam is rejected.
+    expect(validateQuestion("Sam loves ramen, do you?", sam, alex, true)).toBeNull();
   });
 });
