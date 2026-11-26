@@ -18,7 +18,7 @@ export interface FacilitatorSettings {
 }
 
 const KEY = "echo.facilitator";
-const DEFAULTS: FacilitatorSettings = { partner: "simulator", echoInvite: "accept", dateInvite: "reschedule-then-accept" };
+const DEFAULTS: FacilitatorSettings = { partner: "script", echoInvite: "accept", dateInvite: "reschedule-then-accept" };
 
 let settings: FacilitatorSettings = read();
 const listeners = new Set<() => void>();
