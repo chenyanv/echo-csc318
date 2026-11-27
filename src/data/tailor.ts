@@ -25,9 +25,9 @@ interface TailorSpec {
   /** The match's own values, in order of preference, used to fill up to three. */
   ownValues: Value[];
   /** [shared, own] interests → bio. */
-  bio: (shared: Interest, own: Interest) => string;
+  bio: (shared: string, own: string) => string;
   /** One of the match's own interests → "A perfect Sunday" answer. */
-  sunday: (own: Interest) => string;
+  sunday: (own: string) => string;
   /** "I'm looking for" answer, by the match's goal. Omit to keep the written one. */
   lookingFor?: Record<Goal, string>;
   instagram?: string;
@@ -53,6 +53,11 @@ const DOING: Record<Interest, string> = {
   Thrifting: "thrifting",
 };
 
+/** An interest in a sentence. Ones the participant typed under "Other" read as "busy with pottery". */
+const doing = (i: string) => (DOING as Record<string, string>)[i] ?? `busy with ${i.toLowerCase()}`;
+
+const isListed = (i: string) => (INTERESTS as readonly string[]).includes(i);
+
 const SPECS: Record<string, TailorSpec> = {
   // Today's first match: a strong fit, so the tasks are about getting to know someone.
   alex: {
@@ -62,8 +67,8 @@ const SPECS: Record<string, TailorSpec> = {
     core: [],
     own: ["Bouldering", "Coffee spots", "Indie films", "Reading", "Indie music", "Photography", "Running"],
     ownValues: ["Honest communication", "Respecting boundaries", "Humour", "Curiosity"],
-    bio: (a, b) => `Usually ${DOING[a]} or ${DOING[b]}. Slow to warm up, fast to laugh.`,
-    sunday: (a) => `Long brunch, then an afternoon ${DOING[a]}.`,
+    bio: (a, b) => `Usually ${doing(a)} or ${doing(b)}. Slow to warm up, fast to laugh.`,
+    sunday: (a) => `Long brunch, then an afternoon ${doing(a)}.`,
     lookingFor: {
       "long-term": "Someone who's easy to talk to and doesn't mind taking it slow.",
       "open-to-see": "Someone easy to talk to. Happy to see where things go.",
@@ -79,8 +84,8 @@ const SPECS: Record<string, TailorSpec> = {
     core: ["Baking"],
     own: ["Board games", "Video games", "Live music", "Hiking", "Cooking", "Running"],
     ownValues: ["Kindness", "Humour", "Curiosity", "Ambition"],
-    bio: (a, b) => `Will absolutely bring snacks. Usually ${DOING[a]} or ${DOING[b]}.`,
-    sunday: (a) => `Sleep in, make pancakes, then an afternoon ${DOING[a]}.`,
+    bio: (a, b) => `Will absolutely bring snacks. Usually ${doing(a)} or ${doing(b)}.`,
+    sunday: (a) => `Sleep in, make pancakes, then an afternoon ${doing(a)}.`,
     instagram: "jordan.k.uoft",
   },
   // A lighter fit.
@@ -91,8 +96,8 @@ const SPECS: Record<string, TailorSpec> = {
     core: ["Museums"],
     own: ["Thrifting", "Photography", "Yoga", "Coffee spots", "Reading", "Live music"],
     ownValues: ["Independence", "Curiosity", "Honest communication", "Family"],
-    bio: (a, b) => `Sketchbook always in my bag. Usually ${DOING[a]} or ${DOING[b]}.`,
-    sunday: (a) => `Morning sketching, then an afternoon ${DOING[a]}.`,
+    bio: (a, b) => `Sketchbook always in my bag. Usually ${doing(a)} or ${doing(b)}.`,
+    sunday: (a) => `Morning sketching, then an afternoon ${doing(a)}.`,
   },
 };
 
@@ -110,13 +115,15 @@ export function tailorMatch(base: Profile, me: Profile): Profile {
   // Nothing to build around yet (setup skipped): show the match as written.
   if (!spec || me.interests.length === 0) return base;
 
-  const shared = me.interests.slice(0, spec.sharedInterests);
-  const withCore = fill(shared, spec.core, [], shared.length + spec.core.length);
+  // Share the participant's listed interests first; typed-in ones only if there aren't enough.
+  const shared = [...me.interests.filter(isListed), ...me.interests.filter((i) => !isListed(i))].slice(0, spec.sharedInterests);
+  const withCore = fill<string>(shared, spec.core, [], shared.length + spec.core.length);
   // If the participant picked most of the match's own list, top up from everything else.
-  const interests = fill(fill(withCore, spec.own, me.interests, 5), [...INTERESTS], me.interests, 5);
+  const interests = fill<string>(fill<string>(withCore, spec.own, me.interests, 5), [...INTERESTS], me.interests, 5);
 
-  const sharedValues = me.values.slice(0, spec.sharedValues);
-  const values = fill(fill(sharedValues, spec.ownValues, me.values, 3), [...VALUES], me.values, 3);
+  const isListedValue = (v: string) => (VALUES as readonly string[]).includes(v);
+  const sharedValues = [...me.values.filter(isListedValue), ...me.values.filter((v) => !isListedValue(v))].slice(0, spec.sharedValues);
+  const values = fill<string>(fill<string>(sharedValues, spec.ownValues, me.values, 3), [...VALUES], me.values, 3);
 
   // The bio mentions one shared interest and one of their own; Sunday uses another of their own.
   const own = interests.filter((i) => !me.interests.includes(i));

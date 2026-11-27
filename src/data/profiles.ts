@@ -69,8 +69,10 @@ export interface Profile {
   program: string;
   year: string;
   bio: string;
-  interests: Interest[];
-  values: Value[];
+  /** From INTERESTS, plus any the person typed under "Other". */
+  interests: string[];
+  /** From VALUES, plus any the person typed under "Other". */
+  values: string[];
   goal: Goal;
   pace: Pace;
   /** Short Q&A shown on the full profile. */

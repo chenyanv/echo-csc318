@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Chip } from "../../components/ui/Chip";
 import { BackButton } from "../../components/ui/PageHeader";
-import { GOALS, INTERESTS, PACES, VALUES, type Goal, type Interest, type Pace, type Value } from "../../data/profiles";
+import { GOALS, INTERESTS, PACES, VALUES, type Goal, type Pace } from "../../data/profiles";
 import { cleanHandle } from "../../lib/instagram";
 import { scrollPageToTop } from "../../components/PhoneFrame";
 import { useStore } from "../../state/store";
@@ -26,9 +26,10 @@ export default function Setup() {
   const [year, setYear] = useState(me.year);
   const [goal, setGoal] = useState<Goal | null>(me.interests.length ? me.goal : null);
   const [pace, setPace] = useState<Pace | null>(me.interests.length ? me.pace : null);
-  const [interests, setInterests] = useState<Interest[]>(me.interests);
-  const [values, setValues] = useState<Value[]>(me.values);
+  const [interests, setInterests] = useState<string[]>(me.interests);
+  const [values, setValues] = useState<string[]>(me.values);
   const [instagram, setInstagram] = useState(me.instagram ?? "");
+  const [otherPronouns, setOtherPronouns] = useState(!!me.pronouns && !PRONOUNS.includes(me.pronouns));
 
   const steps = [
     { title: "About you", valid: name.trim().length > 0 },
@@ -54,7 +55,7 @@ export default function Setup() {
       type: "UPDATE_PROFILE",
       patch: {
         name: name.trim(),
-        pronouns,
+        pronouns: pronouns.trim(),
         program: program.trim(),
         year,
         goal: goal!,
@@ -93,11 +94,38 @@ export default function Setup() {
             <Field label="Pronouns" hint="Optional. Echo uses these when it mentions you.">
               <div className="flex flex-wrap gap-2">
                 {PRONOUNS.map((p) => (
-                  <Chip key={p} selected={pronouns === p} onClick={() => setPronouns(pronouns === p ? "" : p)}>
+                  <Chip
+                    key={p}
+                    selected={!otherPronouns && pronouns === p}
+                    onClick={() => {
+                      setOtherPronouns(false);
+                      setPronouns(!otherPronouns && pronouns === p ? "" : p);
+                    }}
+                  >
                     {p}
                   </Chip>
                 ))}
+                <Chip
+                  selected={otherPronouns}
+                  onClick={() => {
+                    setOtherPronouns(!otherPronouns);
+                    setPronouns("");
+                  }}
+                >
+                  Other
+                </Chip>
               </div>
+              {otherPronouns && (
+                <input
+                  aria-label="Your pronouns"
+                  className="field mt-3"
+                  value={pronouns}
+                  onChange={(e) => setPronouns(e.target.value)}
+                  placeholder="e.g. xe/xem"
+                  maxLength={20}
+                  autoFocus
+                />
+              )}
             </Field>
             <Field label="Program" hint="Optional">
               <input aria-label="Program" className="field" value={program} onChange={(e) => setProgram(e.target.value)} placeholder="e.g. Psychology" maxLength={40} />
@@ -139,6 +167,14 @@ export default function Setup() {
                     {i}
                   </Chip>
                 ))}
+                <OtherChips
+                  label="interest"
+                  placeholder="e.g. Pottery"
+                  listed={INTERESTS}
+                  selected={interests}
+                  full={interests.length >= MAX_INTERESTS}
+                  onChange={setInterests}
+                />
               </div>
             </Field>
             <Field label="What matters most to you" hint={`Pick up to ${MAX_VALUES}.`}>
@@ -153,6 +189,14 @@ export default function Setup() {
                     {v}
                   </Chip>
                 ))}
+                <OtherChips
+                  label="value"
+                  placeholder="e.g. Loyalty"
+                  listed={VALUES}
+                  selected={values}
+                  full={values.length >= MAX_VALUES}
+                  onChange={setValues}
+                />
               </div>
             </Field>
           </>
@@ -240,5 +284,78 @@ function Options<K extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * Labels the person typed in, shown as selected chips (tap to remove), plus an "Other" chip
+ * that opens a field to add one.
+ */
+function OtherChips({
+  label,
+  placeholder,
+  listed,
+  selected,
+  full,
+  onChange,
+}: {
+  label: string;
+  placeholder: string;
+  listed: readonly string[];
+  selected: string[];
+  full: boolean;
+  onChange: (next: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const custom = selected.filter((x) => !listed.includes(x));
+
+  function add() {
+    const t = text.trim().replace(/\s+/g, " ");
+    if (!t) return;
+    const item = t.charAt(0).toUpperCase() + t.slice(1);
+    const existing = [...listed, ...selected].find((x) => x.toLowerCase() === item.toLowerCase());
+    if (existing) {
+      if (!selected.includes(existing) && !full) onChange([...selected, existing]);
+    } else if (!full) {
+      onChange([...selected, item]);
+    }
+    setText("");
+    setOpen(false);
+  }
+
+  return (
+    <>
+      {custom.map((c) => (
+        <Chip key={c} selected onClick={() => onChange(selected.filter((x) => x !== c))}>
+          {c}
+        </Chip>
+      ))}
+      <Chip selected={open} disabled={full && !open} onClick={() => setOpen(!open)}>
+        + Other
+      </Chip>
+      {open && (
+        <form
+          className="flex w-full gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            add();
+          }}
+        >
+          <input
+            aria-label={`Add your own ${label}`}
+            className="field flex-1"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={placeholder}
+            maxLength={30}
+            autoFocus
+          />
+          <button type="submit" className="btn-secondary shrink-0 px-5" disabled={!text.trim()}>
+            Add
+          </button>
+        </form>
+      )}
+    </>
   );
 }

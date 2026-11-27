@@ -133,4 +133,23 @@ describe("match cards and chats across 300 participant profiles", () => {
     expect(said).toBe("Alex is really into finding good coffee spots.");
     expect(nextFact(me, 3, said).statement).toBe("Sam is into finding good coffee spots too!");
   });
+
+  it("reads cleanly with interests and values typed under Other", () => {
+    const mixed = { ...SAMPLE_USER, name: "Sam", interests: ["Pottery", "Hiking", "Salsa dancing"], values: ["Loyalty", "Kindness"] } as Profile;
+    const onlyOwn = { ...SAMPLE_USER, name: "Sam", interests: ["Pottery", "Salsa dancing", "Chess"], values: ["Loyalty"] } as Profile;
+    for (const me of [mixed, onlyOwn]) {
+      for (const base of MATCHES) {
+        const m = tailorMatch(base, me);
+        expect(new Set(m.interests).size).toBe(5);
+        expect(m.interests.filter((i) => me.interests.includes(i)).length).toBeGreaterThanOrEqual(1);
+        const r = buildMatchReason(me, m);
+        const d = draftReply(me, m, []);
+        const lines = [m.bio, ...m.prompts.map((p) => p.a), ...r.inCommon, ...r.differences, ...echoFacts(me).map((f) => f.statement), [d.opening, d.question].filter(Boolean).join(" ")];
+        for (const line of lines) expect(languageProblem(line), line).toBeNull();
+      }
+    }
+    // Listed interests are shared first, so the bio uses a natural phrase.
+    expect(tailorMatch(MATCHES[1], mixed).bio).toContain("out on a trail");
+    expect(tailorMatch(MATCHES[0], onlyOwn).bio).toContain("busy with pottery");
+  });
 });
