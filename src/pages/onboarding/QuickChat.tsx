@@ -5,12 +5,15 @@ import { quickChatSystem } from "../../ai/personas";
 import { EchoSetupCard } from "../../components/EchoSetupCard";
 import { MessageBubble } from "../../components/chat/MessageBubble";
 import { BackButton } from "../../components/ui/PageHeader";
-import { QUICK_CHAT_FALLBACK } from "../../data/scripts";
+import { QUICK_CHAT_ENOUGH, QUICK_CHAT_FALLBACK } from "../../data/scripts";
 import { useStore } from "../../state/store";
 import { BottomBar } from "../../components/BottomBar";
 
-/** After this many answers we offer to finish. People can always skip. */
-const ANSWERS_TO_FINISH = 3;
+/**
+ * The setup chat has no fixed length: people can keep telling Echo about themselves, or stop
+ * after any answer. After this many answers Echo says it has plenty and the chat ends.
+ */
+const MAX_ANSWERS = 10;
 
 export default function QuickChat() {
   const navigate = useNavigate();
@@ -51,11 +54,11 @@ export default function QuickChat() {
     inputRef.current?.focus();
     dispatch({ type: "QUICK_CHAT_ADD", sender: "me", text, now: Date.now() });
 
-    if (answers + 1 >= ANSWERS_TO_FINISH) {
+    if (answers + 1 >= MAX_ANSWERS) {
       dispatch({
         type: "QUICK_CHAT_ADD",
         sender: "myEcho",
-        text: "Thanks, that's really helpful. That's all I need for now. You can update your profile anytime.",
+        text: QUICK_CHAT_ENOUGH,
         demo: ai.phase !== "ready" || ai.demo,
         now: Date.now(),
       });
@@ -72,7 +75,7 @@ export default function QuickChat() {
       (soFar) => setPending(soFar),
     );
     setPending(null);
-    const fallback = QUICK_CHAT_FALLBACK[Math.min(echoTurns, QUICK_CHAT_FALLBACK.length - 2)];
+    const fallback = QUICK_CHAT_FALLBACK[Math.min(echoTurns, QUICK_CHAT_FALLBACK.length - 1)];
     dispatch({
       type: "QUICK_CHAT_ADD",
       sender: "myEcho",
@@ -88,15 +91,17 @@ export default function QuickChat() {
     navigate("/", { replace: true });
   }
 
-  const done = answers >= ANSWERS_TO_FINISH;
+  const done = answers >= MAX_ANSWERS;
 
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex items-center justify-between">
         <BackButton to="/setup" />
-        <button type="button" onClick={finish} className="min-h-11 px-2 text-[15px] font-medium text-muted hover:text-ink">
-          Skip for now
-        </button>
+        {answers === 0 && (
+          <button type="button" onClick={finish} className="min-h-11 px-2 text-[15px] font-medium text-muted hover:text-ink">
+            Skip for now
+          </button>
+        )}
       </div>
 
       <header className="mt-2">
@@ -107,7 +112,10 @@ export default function QuickChat() {
             <span className="font-semibold">This sets up your Echo,</span> the AI that can chat for you in Echo chat or
             draft a reply. It only does that when you choose to use it.
           </p>
-          <p className="mt-1">You're talking to an AI, not a person. Nothing here is shared with matches.</p>
+          <p className="mt-1">
+            Tell it as much or as little as you like about yourself. Stop whenever you want. You're talking to an AI, not
+            a person, and nothing here is shared with matches.
+          </p>
         </div>
       </header>
 
@@ -128,6 +136,17 @@ export default function QuickChat() {
             Finish setup
           </button>
         ) : (
+          <>
+          {answers > 0 && (
+            <div className="mb-2.5 flex items-center justify-between gap-3">
+              <p className="text-[13px] text-muted">
+                {answers === 1 ? "Keep going to tell Echo more, or stop here." : `${answers} answers so far. Keep going, or stop here.`}
+              </p>
+              <button type="button" className="btn-secondary min-h-9 shrink-0 px-4 text-sm" onClick={finish} disabled={busy}>
+                I'm done
+              </button>
+            </div>
+          )}
           <form
             className="flex items-end gap-2"
             onSubmit={(e) => {
@@ -150,6 +169,7 @@ export default function QuickChat() {
               Send
             </button>
           </form>
+          </>
         )}
       </BottomBar>
     </div>

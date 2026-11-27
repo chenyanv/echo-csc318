@@ -33,10 +33,19 @@ export const INVITE_RESPONSES = {
   decline: "Thanks for asking. I'd like to keep chatting a bit longer before we meet, if that's ok.",
 } as const;
 
-/** Fallback lines for the Quick Chat setup when AI can't run. */
+/** Echo's questions in the setup chat when the AI can't run, in order. The chat has no fixed end. */
 export const QUICK_CHAT_FALLBACK = [
   "Hi! I'm Echo. This is a quick setup chat so I can learn how you talk. What do you usually do on a free afternoon?",
   "Nice. If you could plan the perfect low-key date, what would it be?",
-  "Got it. Last one: how do you usually text, short and quick or long messages?",
-  "Thanks! That's all I need for now. You can change anything later in your profile.",
+  "Got it. How do you usually text, short and quick or long messages?",
+  "How would your friends describe you in three words?",
+  "What always makes you laugh?",
+  "Are you more of a planner or do you like to go with the flow?",
+  "What's something you could talk about for hours?",
+  "How do you like to unwind after a long week?",
+  "What's a small thing that makes your day better?",
+  "What matters most to you when you're getting to know someone?",
 ];
+
+/** Echo's last line once the person has shared a lot. */
+export const QUICK_CHAT_ENOUGH = "Thanks, this is plenty to go on. You can finish setup now, and change anything later in your profile.";

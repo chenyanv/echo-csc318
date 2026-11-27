@@ -109,7 +109,7 @@ export function toneSamples(texts: string[]): string[] {
   return texts
     .map((t) => t.trim().replace(/\s+/g, " "))
     .filter((t) => t.length >= 2)
-    .slice(0, 3)
+    .slice(0, 6)
     .map((t) => (t.length > 140 ? t.slice(0, 140) + "…" : t));
 }
 
