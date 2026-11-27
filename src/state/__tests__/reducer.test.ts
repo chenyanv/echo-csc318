@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chatMode, isMatchNotified, reducer, todayMatchId, type Action } from "../reducer";
+import { activeMatchId, chatMode, isMatchNotified, reducer, todayMatchId, type Action } from "../reducer";
 import { buildPreset } from "../presets";
 import { UNDO_MS, type AppState } from "../types";
 
@@ -33,7 +33,12 @@ describe("daily match decisions", () => {
     let s = buildPreset("t1", T);
     s = run(s, { type: "MATCH_PASS", matchId: "alex", now: 0 });
     expect(todayMatchId(s)).toBe("jordan");
-    s = run(s, { type: "MATCH_ACCEPT", matchId: "jordan", now: 0 }, { type: "MATCH_DECLINE", matchId: "jordan", now: 1 });
+    s = run(s, { type: "MATCH_ACCEPT", matchId: "jordan", now: 0 });
+    // One person at a time: Priya can't be matched while Jordan is.
+    expect(activeMatchId(s)).toBe("jordan");
+    expect(run(s, { type: "MATCH_ACCEPT", matchId: "priya", now: 0 }).connections.priya).toBeUndefined();
+    s = run(s, { type: "MATCH_DECLINE", matchId: "jordan", now: 1 });
+    expect(activeMatchId(s)).toBeNull();
     expect(todayMatchId(s)).toBe("priya");
     s = run(s, { type: "MATCH_PASS", matchId: "priya", now: 2 });
     expect(todayMatchId(s)).toBe("alex");

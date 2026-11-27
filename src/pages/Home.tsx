@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { EchoMark } from "../components/EchoMark";
 import { EchoSetupCard } from "../components/EchoSetupCard";
 import { Avatar } from "../components/ui/Avatar";
-import { pendingToday } from "../state/reducer";
+import { activeMatchId, pendingToday } from "../state/reducer";
 import { useStore } from "../state/store";
 import { matchFor } from "../data/tailor";
 
@@ -15,6 +15,7 @@ function greeting(hour: number) {
 export default function Home() {
   const { state } = useStore();
   const waiting = pendingToday(state).length;
+  const active = activeMatchId(state);
   const matched = Object.values(state.connections).filter((c) => c.decision.kind === "accepted");
 
   return (
@@ -32,7 +33,7 @@ export default function Home() {
         <EchoSetupCard compact />
       </div>
 
-      <TodayCard waiting={waiting} />
+      {!active && <TodayCard waiting={waiting} />}
 
       <h2 className="mt-10 font-semibold">Your matches</h2>
       {matched.length === 0 ? (

@@ -20,7 +20,6 @@ export default function MatchProfile() {
   const now = useNow(d?.kind === "declined");
 
   if (!match || !conn || d?.kind === "pending" || d?.kind === "passed") return <Navigate to="/today" replace />;
-  const nextUp = <NextMatchLink left={pendingToday(state).length} />;
 
   if (d?.kind === "declined") {
     const notified = isMatchNotified(d, now);
@@ -104,7 +103,6 @@ export default function MatchProfile() {
         </Link>
       </div>
       <p className="mt-2 text-center text-[13px] text-muted">No rush. Chat as long as you like before planning anything.</p>
-      {nextUp}
 
       <article className="card mt-6 space-y-6 p-5">
         <p className="text-[15px] leading-relaxed">{match.bio}</p>
@@ -137,7 +135,8 @@ export default function MatchProfile() {
           Decline {match.name}
         </button>
         <p className="mt-2 text-[13px] text-muted">
-          Ends the connection and closes your chat. You'll have 10 seconds to undo before {match.name} is told.
+          Ends the connection and closes your chat. You'll have 10 seconds to undo before {match.name} is told. After
+          that, you can see your other matches.
         </p>
       </div>
     </section>
@@ -254,21 +253,3 @@ function HandleCard({ label, handle, mine }: { label: string; handle: string; mi
   );
 }
 
-/** After matching (or declining), carry on with today's other matches. */
-function NextMatchLink({ left }: { left: number }) {
-  if (left === 0) return null;
-  return (
-    <Link
-      to="/today"
-      className="card mt-5 flex items-center justify-between gap-3 border-accent/30 bg-accent-soft/60 p-4 hover:shadow-sm"
-    >
-      <span>
-        <span className="block font-semibold">Keep browsing</span>
-        <span className="block text-sm text-muted">
-          {left === 1 ? "1 more match" : `${left} more matches`} waiting today
-        </span>
-      </span>
-      <span className="btn-primary min-h-9 shrink-0 px-4 text-sm">Next match</span>
-    </Link>
-  );
-}

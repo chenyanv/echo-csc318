@@ -106,22 +106,25 @@ const isOut = (state: AppState, id: string) => {
   return k === "passed" || k === "declined";
 };
 
+/**
+ * The one person you're currently matched with, if any. Echo is one person at a time: while
+ * you're matched with someone, no new matches show until you decline them.
+ */
+export function activeMatchId(state: AppState): string | null {
+  return Object.values(state.connections).find((c) => c.decision.kind === "accepted")?.matchId ?? null;
+}
+
 /** Today's matches you haven't decided on yet, in order. */
 export function pendingToday(state: AppState): string[] {
   return todayQueue(state).filter((id) => (state.connections[id]?.decision.kind ?? "pending") === "pending");
 }
 
 /**
- * The match to show now: the next one you haven't decided on. Matching with, passing on or
- * declining someone moves on to the next; once you've seen everyone, the first one stays.
+ * The match to show now: the next one you haven't decided on. Passing on or declining someone
+ * moves on to the next; once you've seen everyone, the first one stays.
  */
 export function todayMatchId(state: AppState): string {
   return pendingToday(state)[0] ?? todayQueue(state).find((id) => !isOut(state, id)) ?? todayQueue(state)[0];
-}
-
-/** How many matches are still waiting after the one shown now. */
-export function matchesLeftAfter(state: AppState, id: string): number {
-  return todayQueue(state).filter((x) => x !== id && !isOut(state, x) && (state.connections[x]?.decision.kind ?? "pending") === "pending").length;
 }
 
 /** The chat's one shared mode: two Echoes talking, or two people. */
@@ -293,6 +296,8 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, day: state.day + 1 };
 
     case "MATCH_ACCEPT":
+      // One person at a time.
+      if (activeMatchId(state) && activeMatchId(state) !== action.matchId) return state;
       return updateConnection(state, action.matchId, (c) =>
         c.decision.kind === "pending" ? { ...c, decision: { kind: "accepted", at: action.now } } : c,
       );
@@ -312,6 +317,8 @@ export function reducer(state: AppState, action: Action): AppState {
       );
 
     case "MATCH_UNDO":
+      // Undoing a decline would bring back a match; not while you've matched with someone else.
+      if (state.connections[action.matchId]?.decision.kind === "declined" && activeMatchId(state)) return state;
       return updateConnection(state, action.matchId, (c) => {
         const d = c.decision;
         if (d.kind === "passed" && isUndoable(d, action.now)) return { ...c, decision: { kind: "pending" } };

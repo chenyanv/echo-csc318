@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { InterestList, MatchHeader, MatchReasonBlock } from "../components/MatchDetails";
 import { UndoBar } from "../components/ui/UndoBar";
 import { Avatar } from "../components/ui/Avatar";
-import { isUndoable, matchesLeftAfter, pendingToday, todayMatchId, todayQueue } from "../state/reducer";
+import { activeMatchId, isUndoable, pendingToday, todayMatchId } from "../state/reducer";
 import { useNow, useStore } from "../state/store";
 import { matchFor } from "../data/tailor";
 import { BottomBar } from "../components/BottomBar";
@@ -18,7 +18,6 @@ export default function Today() {
     (c) => c.decision.kind === "passed" && c.decision.undoUntil > Date.now(),
   );
   const now = useNow(!!justPassed);
-  const left = matchesLeftAfter(state, matchId);
   const undo =
     justPassed && justPassed.decision.kind === "passed" && isUndoable(justPassed.decision, now)
       ? {
@@ -28,33 +27,32 @@ export default function Today() {
         }
       : null;
 
+  const active = activeMatchId(state);
+  if (active) {
+    const m = matchFor(state, active);
+    return (
+      <section>
+        <p className="text-[13px] font-medium text-accent">Today's matches</p>
+        <h1 className="mt-1 text-[26px] font-semibold tracking-tight">You're getting to know {m.name}</h1>
+        <p className="mt-2 text-muted">
+          Echo is one person at a time, so you can give each match your full attention. To see other matches, decline{" "}
+          {m.name} first. You can do that from their profile.
+        </p>
+        <Link to={`/match/${active}`} className="card mt-6 flex items-center gap-3 p-3 hover:shadow-sm">
+          <Avatar profile={m} size="sm" />
+          <span className="flex-1 font-medium">{m.name}</span>
+          <span className="text-sm font-medium text-muted">Open</span>
+        </Link>
+      </section>
+    );
+  }
+
   if (pending.length === 0) {
-    const matchedToday = todayQueue(state).filter((id) => state.connections[id]?.decision.kind === "accepted");
     return (
       <section>
         <p className="text-[13px] font-medium text-accent">Today's matches</p>
         <h1 className="mt-1 text-[26px] font-semibold tracking-tight">That's everyone for today</h1>
         <p className="mt-2 text-muted">Your next matches arrive tomorrow.</p>
-
-        {matchedToday.length > 0 && (
-          <div className="mt-8">
-            <h2 className="font-semibold">You matched with</h2>
-            <ul className="mt-3 space-y-2">
-              {matchedToday.map((id) => {
-                const m = matchFor(state, id);
-                return (
-                  <li key={id}>
-                    <Link to={`/match/${id}`} className="card flex items-center gap-3 p-3 hover:shadow-sm">
-                      <Avatar profile={m} size="sm" />
-                      <span className="flex-1 font-medium">{m.name}</span>
-                      <span className="text-sm font-medium text-muted">Open</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
 
         <RecentlyPassed />
 
@@ -67,32 +65,7 @@ export default function Today() {
     <section>
       <p className="text-[13px] font-medium text-accent">Today's match</p>
 
-      <div
-        role="note"
-        className="mt-3 flex items-start gap-2.5 rounded-2xl border border-accent/20 bg-accent-soft px-4 py-3 text-[15px] text-accent-strong"
-      >
-        <svg viewBox="0 0 20 20" className="mt-0.5 size-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-          <circle cx="10" cy="10" r="7.5" />
-          <path d="M10 6v4.5M10 13.5v.5" strokeLinecap="round" />
-        </svg>
-        <span>
-          {left > 0 ? (
-            <>
-              <strong className="font-semibold">
-                {left === 1 ? "1 more match" : `${left} more matches`} after this one today.
-              </strong>{" "}
-              Passing doesn't notify anyone, and matching doesn't stop you seeing the rest.
-            </>
-          ) : (
-            <>
-              <strong className="font-semibold">This is your last match today.</strong> Your next matches arrive
-              tomorrow.
-            </>
-          )}
-        </span>
-      </div>
-
-      <article className="card mt-4 p-5">
+      <article className="card mt-3 p-5">
         <MatchHeader match={match} />
         <p className="mt-4 text-[15px] leading-relaxed">{match.bio}</p>
 
