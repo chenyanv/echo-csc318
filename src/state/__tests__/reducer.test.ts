@@ -29,6 +29,18 @@ describe("daily match decisions", () => {
     expect(alex(s).decision.kind).toBe("pending");
   });
 
+  it("moves on to the next match after a pass or decline, until all are out", () => {
+    let s = buildPreset("t1", T);
+    s = run(s, { type: "MATCH_PASS", matchId: "alex", now: 0 });
+    expect(todayMatchId(s)).toBe("jordan");
+    s = run(s, { type: "MATCH_ACCEPT", matchId: "jordan", now: 0 }, { type: "MATCH_DECLINE", matchId: "jordan", now: 1 });
+    expect(todayMatchId(s)).toBe("priya");
+    s = run(s, { type: "MATCH_PASS", matchId: "priya", now: 2 });
+    expect(todayMatchId(s)).toBe("alex");
+    s = run(s, { type: "MATCH_RESTORE", matchId: "priya" });
+    expect(todayMatchId(s)).toBe("priya");
+  });
+
   it("offers one match per day, in queue order", () => {
     const s = buildPreset("t1", T);
     expect(todayMatchId(s)).toBe("alex");

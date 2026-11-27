@@ -5,7 +5,7 @@ import { PageTitle } from "../components/ui/PageHeader";
 import { GOALS, PACES } from "../data/profiles";
 import { useStore } from "../state/store";
 import { useState } from "react";
-import { removeEchoFromDevice, useEchoStatus, ECHO_DOWNLOAD_MB } from "../ai/useEcho";
+import { loadEcho, removeEchoFromDevice, useEchoStatus, ECHO_DOWNLOAD_MB } from "../ai/useEcho";
 import { modelExpiresAt, modelSavedAt, MODEL_TTL_DAYS } from "../ai/modelCache";
 
 export default function Profile() {
@@ -61,6 +61,7 @@ function EchoOnDevice() {
   const expires = modelExpiresAt();
   const fmt = (t: number) => new Date(t).toLocaleDateString("en-CA", { month: "short", day: "numeric" });
   const onDevice = ai.cached || ai.phase === "ready";
+  const pct = Math.round(ai.progress * 100);
 
   return (
     <div className="card mt-4 p-5">
@@ -68,32 +69,62 @@ function EchoOnDevice() {
       <p className="mt-1 text-sm text-muted">
         Echo's AI runs in your browser, so your chats with Echo stay on this device.
       </p>
-      {onDevice ? (
+
+      {ai.phase === "loading" ? (
+        <>
+          <p className="mt-3 text-[15px]">
+            {ai.cached ? "Loading Echo from this device…" : "Downloading Echo…"} {pct}%
+          </p>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-canvas">
+            <div className="h-full rounded-full bg-echo transition-[width]" style={{ width: `${pct}%` }} />
+          </div>
+        </>
+      ) : ai.phase === "unsupported" || ai.phase === "error" || ai.phase === "checking" ? (
+        <p className="mt-3 text-[15px] text-muted">
+          {ai.phase === "checking"
+            ? "Checking whether Echo can run on this device…"
+            : `${ai.phase === "error" ? "Echo couldn't load on this device." : ai.reason} Echo uses demo replies here. Chrome or Edge on a laptop works best.`}
+        </p>
+      ) : onDevice ? (
         <>
           <p className="mt-3 text-[15px]">
             The model (about {ECHO_DOWNLOAD_MB} MB) is saved here
             {saved && expires ? `. Downloaded ${fmt(saved)}, removed automatically on ${fmt(expires)}.` : "."}
+            {ai.demo && " Echo is using demo replies for now."}
           </p>
-          <button
-            type="button"
-            className="btn-secondary mt-3"
-            disabled={removing}
-            onClick={async () => {
-              setRemoving(true);
-              await removeEchoFromDevice();
-              setRemoving(false);
-              setRemoved(true);
-            }}
-          >
-            {removing ? "Removing…" : "Remove from this device"}
-          </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ai.demo && (
+              <button type="button" className="btn-echo" onClick={() => void loadEcho()}>
+                Use on-device AI
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={removing}
+              onClick={async () => {
+                setRemoving(true);
+                await removeEchoFromDevice();
+                setRemoving(false);
+                setRemoved(true);
+              }}
+            >
+              {removing ? "Removing…" : "Remove from this device"}
+            </button>
+          </div>
         </>
       ) : (
-        <p className="mt-3 text-[15px] text-muted">
-          {removed
-            ? "Removed. Echo will use demo replies until you download it again."
-            : `Not downloaded. Downloads are kept for ${MODEL_TTL_DAYS} days.`}
-        </p>
+        <>
+          <p className="mt-3 text-[15px] text-muted">
+            {removed ? "Removed. Echo uses demo replies until you download it again." : "Not downloaded. Echo uses demo replies for now."}
+          </p>
+          <p className="mt-1 text-[13px] text-muted">
+            One-time download, about {ECHO_DOWNLOAD_MB} MB. Best on Wi-Fi. Kept for {MODEL_TTL_DAYS} days.
+          </p>
+          <button type="button" className="btn-echo mt-3" onClick={() => void loadEcho()}>
+            Download Echo
+          </button>
+        </>
       )}
     </div>
   );

@@ -95,8 +95,33 @@ export function isMatchNotified(decision: MatchDecision, now: number): boolean {
   return decision.kind === "declined" && now >= decision.undoUntil;
 }
 
+/** Today's matches in order: the queue, starting at the current day. */
+export function todayQueue(state: AppState): string[] {
+  const q = state.matchQueue;
+  return q.map((_, i) => q[(state.day + i) % q.length]);
+}
+
+const isOut = (state: AppState, id: string) => {
+  const k = state.connections[id]?.decision.kind;
+  return k === "passed" || k === "declined";
+};
+
+/** Today's matches you haven't decided on yet, in order. */
+export function pendingToday(state: AppState): string[] {
+  return todayQueue(state).filter((id) => (state.connections[id]?.decision.kind ?? "pending") === "pending");
+}
+
+/**
+ * The match to show now: the next one you haven't decided on. Matching with, passing on or
+ * declining someone moves on to the next; once you've seen everyone, the first one stays.
+ */
 export function todayMatchId(state: AppState): string {
-  return state.matchQueue[state.day % state.matchQueue.length];
+  return pendingToday(state)[0] ?? todayQueue(state).find((id) => !isOut(state, id)) ?? todayQueue(state)[0];
+}
+
+/** How many matches are still waiting after the one shown now. */
+export function matchesLeftAfter(state: AppState, id: string): number {
+  return todayQueue(state).filter((x) => x !== id && !isOut(state, x) && (state.connections[x]?.decision.kind ?? "pending") === "pending").length;
 }
 
 /** The chat's one shared mode: two Echoes talking, or two people. */

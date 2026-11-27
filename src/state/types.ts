@@ -96,7 +96,7 @@ export interface AppState {
   onboarded: boolean;
   me: Profile;
   quickChat: QuickChatState;
-  /** Prototype "day" counter; one match per day. Advanced by the facilitator. */
+  /** Prototype "day" counter; today's queue starts here. Advanced by the facilitator. */
   day: number;
   /** Order in which matches are offered, one per day. */
   matchQueue: string[];

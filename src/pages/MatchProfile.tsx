@@ -6,7 +6,7 @@ import { Sheet } from "../components/ui/Sheet";
 import { UndoBar } from "../components/ui/UndoBar";
 import { MATCHES, type Profile } from "../data/profiles";
 import { cleanHandle } from "../lib/instagram";
-import { isMatchNotified, isUndoable } from "../state/reducer";
+import { isMatchNotified, isUndoable, pendingToday } from "../state/reducer";
 import { useNow, useStore } from "../state/store";
 import { formatDate, formatTime, isPast } from "../lib/format";
 import { matchFor } from "../data/tailor";
@@ -20,6 +20,7 @@ export default function MatchProfile() {
   const now = useNow(d?.kind === "declined");
 
   if (!match || !conn || d?.kind === "pending" || d?.kind === "passed") return <Navigate to="/today" replace />;
+  const nextUp = <NextMatchLink left={pendingToday(state).length} />;
 
   if (d?.kind === "declined") {
     const notified = isMatchNotified(d, now);
@@ -32,6 +33,9 @@ export default function MatchProfile() {
             ? `${match.name} has been told the connection has ended. Your chat is closed.`
             : `${match.name} will be told in a few seconds unless you undo.`}
         </p>
+        <Link to="/today" className="btn-primary mt-6 w-full">
+          {pendingToday(state).length > 0 ? `See other matches (${pendingToday(state).length} left today)` : "See today's matches"}
+        </Link>
         {isUndoable(d, now) && (
           <UndoBar
             message={`You declined ${match.name}`}
@@ -100,6 +104,7 @@ export default function MatchProfile() {
         </Link>
       </div>
       <p className="mt-2 text-center text-[13px] text-muted">No rush. Chat as long as you like before planning anything.</p>
+      {nextUp}
 
       <article className="card mt-6 space-y-6 p-5">
         <p className="text-[15px] leading-relaxed">{match.bio}</p>
@@ -126,12 +131,12 @@ export default function MatchProfile() {
       <div className="mt-8 border-t border-line pt-6">
         <button
           type="button"
-          className="text-[15px] font-medium text-accent-strong hover:underline"
+          className="btn-secondary w-full text-accent-strong"
           onClick={() => dispatch({ type: "MATCH_DECLINE", matchId: match.id, now: Date.now() })}
         >
           Decline {match.name}
         </button>
-        <p className="mt-1 text-[13px] text-muted">
+        <p className="mt-2 text-[13px] text-muted">
           Ends the connection and closes your chat. You'll have 10 seconds to undo before {match.name} is told.
         </p>
       </div>
@@ -246,5 +251,24 @@ function HandleCard({ label, handle, mine }: { label: string; handle: string; mi
         </button>
       )}
     </div>
+  );
+}
+
+/** After matching (or declining), carry on with today's other matches. */
+function NextMatchLink({ left }: { left: number }) {
+  if (left === 0) return null;
+  return (
+    <Link
+      to="/today"
+      className="card mt-5 flex items-center justify-between gap-3 border-accent/30 bg-accent-soft/60 p-4 hover:shadow-sm"
+    >
+      <span>
+        <span className="block font-semibold">Keep browsing</span>
+        <span className="block text-sm text-muted">
+          {left === 1 ? "1 more match" : `${left} more matches`} waiting today
+        </span>
+      </span>
+      <span className="btn-primary min-h-9 shrink-0 px-4 text-sm">Next match</span>
+    </Link>
   );
 }

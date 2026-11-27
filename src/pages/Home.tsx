@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { EchoMark } from "../components/EchoMark";
 import { EchoSetupCard } from "../components/EchoSetupCard";
 import { Avatar } from "../components/ui/Avatar";
-import { newConnection, todayMatchId } from "../state/reducer";
+import { pendingToday } from "../state/reducer";
 import { useStore } from "../state/store";
 import { matchFor } from "../data/tailor";
 
@@ -14,9 +14,7 @@ function greeting(hour: number) {
 
 export default function Home() {
   const { state } = useStore();
-  const todayId = todayMatchId(state);
-  const today = matchFor(state, todayId);
-  const todayConn = state.connections[todayId] ?? newConnection(todayId);
+  const waiting = pendingToday(state).length;
   const matched = Object.values(state.connections).filter((c) => c.decision.kind === "accepted");
 
   return (
@@ -34,7 +32,7 @@ export default function Home() {
         <EchoSetupCard compact />
       </div>
 
-      <TodayCard name={today.name} decision={todayConn.decision.kind} matchId={todayId} />
+      <TodayCard waiting={waiting} />
 
       <h2 className="mt-10 font-semibold">Your matches</h2>
       {matched.length === 0 ? (
@@ -64,33 +62,24 @@ export default function Home() {
   );
 }
 
-function TodayCard({ name, decision, matchId }: { name: string; decision: string; matchId: string }) {
-  if (decision === "pending") {
+function TodayCard({ waiting }: { waiting: number }) {
+  if (waiting > 0) {
     return (
       <Link to="/today" className="card mt-4 block p-5 transition-shadow hover:shadow-md">
-        <p className="text-[13px] font-medium text-accent">Today's match</p>
-        <p className="mt-1 text-lg font-semibold">Echo found someone for you</p>
-        <p className="mt-1 text-sm text-muted">You get one match a day, so take your time with it.</p>
+        <p className="text-[13px] font-medium text-accent">Today's matches</p>
+        <p className="mt-1 text-lg font-semibold">
+          {waiting === 1 ? "1 match waiting for you" : `${waiting} matches waiting for you`}
+        </p>
+        <p className="mt-1 text-sm text-muted">See them one at a time, and take your time with each.</p>
         <span className="btn-primary mt-4">See today's match</span>
       </Link>
     );
   }
-  if (decision === "passed") {
-    return (
-      <Link to="/today" className="card mt-4 block p-5">
-        <p className="text-[13px] font-medium text-muted">Today's match</p>
-        <p className="mt-1 font-semibold">You passed on {name} today.</p>
-        <p className="mt-1 text-sm text-muted">Your next match arrives tomorrow. Changed your mind? You can bring {name} back.</p>
-      </Link>
-    );
-  }
   return (
-    <Link to={`/match/${matchId}`} className="card mt-4 block p-5">
-      <p className="text-[13px] font-medium text-muted">Today's match</p>
-      <p className="mt-1 font-semibold">
-        {decision === "accepted" ? `You and ${name} matched.` : `You declined ${name}.`}
-      </p>
-      <p className="mt-1 text-sm text-muted">Your next match arrives tomorrow.</p>
+    <Link to="/today" className="card mt-4 block p-5">
+      <p className="text-[13px] font-medium text-muted">Today's matches</p>
+      <p className="mt-1 font-semibold">You've seen everyone for today.</p>
+      <p className="mt-1 text-sm text-muted">Your next matches arrive tomorrow. Changed your mind? You can bring someone back.</p>
     </Link>
   );
 }

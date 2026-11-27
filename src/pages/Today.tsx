@@ -1,40 +1,64 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { InterestList, MatchHeader, MatchReasonBlock } from "../components/MatchDetails";
 import { UndoBar } from "../components/ui/UndoBar";
 import { Avatar } from "../components/ui/Avatar";
-import { isUndoable, newConnection, todayMatchId } from "../state/reducer";
+import { isUndoable, matchesLeftAfter, pendingToday, todayMatchId, todayQueue } from "../state/reducer";
 import { useNow, useStore } from "../state/store";
 import { matchFor } from "../data/tailor";
 import { BottomBar } from "../components/BottomBar";
 
 export default function Today() {
   const { state, dispatch } = useStore();
-  const matchId = todayMatchId(state);
+  const navigate = useNavigate();
+  const pending = pendingToday(state);
+  const matchId = pending[0] ?? todayMatchId(state);
   const match = matchFor(state, matchId);
-  const conn = state.connections[matchId] ?? newConnection(matchId);
-  const d = conn.decision;
-  const now = useNow(d.kind === "passed");
+  // Someone just passed on stays undoable while the next match (or the summary) is on screen.
+  const justPassed = Object.values(state.connections).find(
+    (c) => c.decision.kind === "passed" && c.decision.undoUntil > Date.now(),
+  );
+  const now = useNow(!!justPassed);
+  const left = matchesLeftAfter(state, matchId);
+  const undo =
+    justPassed && justPassed.decision.kind === "passed" && isUndoable(justPassed.decision, now)
+      ? {
+          message: `You passed on ${matchFor(state, justPassed.matchId).name}`,
+          until: justPassed.decision.undoUntil,
+          onUndo: () => dispatch({ type: "MATCH_UNDO", matchId: justPassed.matchId, now: Date.now() }),
+        }
+      : null;
 
-  if (d.kind === "accepted" || d.kind === "declined") {
-    return <Navigate to={`/match/${matchId}`} replace />;
-  }
-
-  if (d.kind === "passed") {
+  if (pending.length === 0) {
+    const matchedToday = todayQueue(state).filter((id) => state.connections[id]?.decision.kind === "accepted");
     return (
       <section>
-        <p className="text-[13px] font-medium text-accent">Today's match</p>
-        <h1 className="mt-1 text-[26px] font-semibold tracking-tight">You passed on {match.name}</h1>
-        <p className="mt-2 text-muted">That was today's match. Your next one arrives tomorrow.</p>
+        <p className="text-[13px] font-medium text-accent">Today's matches</p>
+        <h1 className="mt-1 text-[26px] font-semibold tracking-tight">That's everyone for today</h1>
+        <p className="mt-2 text-muted">Your next matches arrive tomorrow.</p>
+
+        {matchedToday.length > 0 && (
+          <div className="mt-8">
+            <h2 className="font-semibold">You matched with</h2>
+            <ul className="mt-3 space-y-2">
+              {matchedToday.map((id) => {
+                const m = matchFor(state, id);
+                return (
+                  <li key={id}>
+                    <Link to={`/match/${id}`} className="card flex items-center gap-3 p-3 hover:shadow-sm">
+                      <Avatar profile={m} size="sm" />
+                      <span className="flex-1 font-medium">{m.name}</span>
+                      <span className="text-sm font-medium text-muted">Open</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         <RecentlyPassed />
 
-        {isUndoable(d, now) && (
-          <UndoBar
-            message={`You passed on ${match.name}`}
-            until={d.undoUntil}
-            onUndo={() => dispatch({ type: "MATCH_UNDO", matchId, now: Date.now() })}
-          />
-        )}
+        {undo && <UndoBar {...undo} />}
       </section>
     );
   }
@@ -52,8 +76,19 @@ export default function Today() {
           <path d="M10 6v4.5M10 13.5v.5" strokeLinecap="round" />
         </svg>
         <span>
-          <strong className="font-semibold">This is your only match today.</strong> If you pass, your next match arrives
-          tomorrow.
+          {left > 0 ? (
+            <>
+              <strong className="font-semibold">
+                {left === 1 ? "1 more match" : `${left} more matches`} after this one today.
+              </strong>{" "}
+              Passing doesn't notify anyone, and matching doesn't stop you seeing the rest.
+            </>
+          ) : (
+            <>
+              <strong className="font-semibold">This is your last match today.</strong> Your next matches arrive
+              tomorrow.
+            </>
+          )}
         </span>
       </div>
 
@@ -70,11 +105,15 @@ export default function Today() {
       </article>
 
       <BottomBar>
+        {undo && <UndoBar inline {...undo} />}
         <div className="grid grid-cols-2 gap-3">
         <button type="button" className="btn-secondary" onClick={() => dispatch({ type: "MATCH_PASS", matchId, now: Date.now() })}>
           Not for me
         </button>
-        <button type="button" className="btn-primary" onClick={() => dispatch({ type: "MATCH_ACCEPT", matchId, now: Date.now() })}>
+        <button type="button" className="btn-primary" onClick={() => {
+            dispatch({ type: "MATCH_ACCEPT", matchId, now: Date.now() });
+            navigate(`/match/${matchId}`);
+          }}>
           I'm interested
         </button>
         </div>
