@@ -72,3 +72,7 @@ src/
   sim/         user simulator for the match (persona, ReAct-style step, script fallback)
   state/       reducer, presets, store, facilitator settings, session log
 ```
+
+## Credits
+
+Match avatars in `public/avatars/` are from [Notionists](https://heyzoish.gumroad.com/l/notionists) by Zoish (CC0 1.0), generated with [DiceBear](https://www.dicebear.com).

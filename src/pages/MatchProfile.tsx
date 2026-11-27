@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { InterestList, MatchHeader, MatchReasonBlock } from "../components/MatchDetails";
+import { MatchHeader, MatchReasonBlock, ProfileCard } from "../components/MatchDetails";
 import { BackButton } from "../components/ui/PageHeader";
 import { Sheet } from "../components/ui/Sheet";
 import { UndoBar } from "../components/ui/UndoBar";
@@ -104,18 +104,9 @@ export default function MatchProfile() {
       </div>
       <p className="mt-2 text-center text-[13px] text-muted">No rush. Chat as long as you like before planning anything.</p>
 
-      <article className="card mt-6 space-y-6 p-5">
-        <p className="text-[15px] leading-relaxed">{match.bio}</p>
-        <div className="space-y-4">
-          {match.prompts.map((p) => (
-            <div key={p.q}>
-              <p className="text-[13px] font-medium text-muted">{p.q}</p>
-              <p className="mt-0.5 text-[17px]">{p.a}</p>
-            </div>
-          ))}
-        </div>
-        <InterestList me={state.me} match={match} />
-      </article>
+      <div className="mt-6">
+        <ProfileCard me={state.me} match={match} />
+      </div>
 
       <InstagramPanel match={match} />
 

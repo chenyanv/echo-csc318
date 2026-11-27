@@ -16,6 +16,51 @@ export function MatchHeader({ match }: { match: Profile }) {
 }
 
 /**
+ * The match's profile: bio, prompts and interests. Today and the match's page both use this,
+ * so people see the same person before and after they decide.
+ */
+export function ProfileCard({
+  me,
+  match,
+  withHeader,
+  children,
+}: {
+  me: Profile;
+  match: Profile;
+  withHeader?: boolean;
+  /** Extra sections under the profile (Today shows what you have in common). */
+  children?: React.ReactNode;
+}) {
+  return (
+    <article className="card p-5">
+      {withHeader && (
+        <div className="mb-4">
+          <MatchHeader match={match} />
+        </div>
+      )}
+      <div className="space-y-6">
+        <p className="text-[15px] leading-relaxed">{match.bio}</p>
+        <div className="space-y-4">
+          {match.prompts.map((p) => (
+            <div key={p.q}>
+              <p className="text-[13px] font-medium text-muted">{p.q}</p>
+              <p className="mt-0.5 text-[17px]">{p.a}</p>
+            </div>
+          ))}
+        </div>
+        <InterestList me={me} match={match} />
+      </div>
+      {children && (
+        <>
+          <hr className="my-6 border-line" />
+          {children}
+        </>
+      )}
+    </article>
+  );
+}
+
+/**
  * What the two profiles have in common, and where they differ. Built from both profiles by
  * rules, not by the AI, and it says so, so people know these lines are facts rather than guesses.
  * (Not "why Echo suggested them": the order of daily matches isn't based on these.)

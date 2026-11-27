@@ -79,6 +79,8 @@ export interface Profile {
   prompts: { q: string; a: string }[];
   /** Two colours for the generated avatar (no photos in the prototype). */
   avatar: [string, string];
+  /** Illustrated avatar in /public/avatars (Notionists by Zoish, CC0). Falls back to the initial. */
+  picture?: string;
   /** Only shown to the other person after this user chooses to share it. */
   instagram?: string;
 }
@@ -102,6 +104,7 @@ export const MATCHES: Profile[] = [
       { q: "Green flag", a: "You text back when you say you will." },
     ],
     avatar: ["#f97066", "#fdb022"],
+    picture: "/avatars/alex.svg",
     instagram: "alex.climbs.uoft",
   },
   {
@@ -122,6 +125,7 @@ export const MATCHES: Profile[] = [
       { q: "Green flag", a: "You're nice to servers." },
     ],
     avatar: ["#7a5af8", "#36bffa"],
+    picture: "/avatars/jordan.svg",
     instagram: "jordan.bakes",
   },
   {
@@ -142,6 +146,7 @@ export const MATCHES: Profile[] = [
       { q: "Green flag", a: "You ask follow-up questions." },
     ],
     avatar: ["#12b76a", "#a6ef67"],
+    picture: "/avatars/priya.svg",
   },
 ];
 

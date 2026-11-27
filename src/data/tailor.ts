@@ -28,7 +28,7 @@ interface TailorSpec {
   bio: (shared: string, own: string) => string;
   /** One of the match's own interests → "A perfect Sunday" answer. */
   sunday: (own: string) => string;
-  /** "I'm looking for" answer, by the match's goal. Omit to keep the written one. */
+  /** "I'm looking for" answer, by the match's goal, so it agrees with "Worth knowing". */
   lookingFor?: Record<Goal, string>;
   instagram?: string;
 }
@@ -86,6 +86,11 @@ const SPECS: Record<string, TailorSpec> = {
     ownValues: ["Kindness", "Humour", "Curiosity", "Ambition"],
     bio: (a, b) => `Will absolutely bring snacks. Usually ${doing(a)} or ${doing(b)}.`,
     sunday: (a) => `Sleep in, make pancakes, then an afternoon ${doing(a)}.`,
+    lookingFor: {
+      "long-term": "Someone curious to build something real with, one step at a time.",
+      "open-to-see": "Someone curious who likes trying new things. No rush to label it.",
+      casual: "Someone curious and fun. Keeping it light for now.",
+    },
     instagram: "jordan.k.uoft",
   },
   // A lighter fit.
@@ -98,6 +103,11 @@ const SPECS: Record<string, TailorSpec> = {
     ownValues: ["Independence", "Curiosity", "Honest communication", "Family"],
     bio: (a, b) => `Sketchbook always in my bag. Usually ${doing(a)} or ${doing(b)}.`,
     sunday: (a) => `Morning sketching, then an afternoon ${doing(a)}.`,
+    lookingFor: {
+      "long-term": "Someone with their own passions who wants something long-term.",
+      "open-to-see": "Someone with their own passions. Happy to see where it goes.",
+      casual: "Someone with their own passions to explore the city with. Nothing serious yet.",
+    },
   },
 };
 
@@ -152,5 +162,7 @@ export function matchFor(
   state: { me: Profile; connections: Record<string, { profile?: Profile }> },
   id: string,
 ): Profile {
-  return state.connections[id]?.profile ?? tailorMatch(getMatch(id), state.me);
+  const snap = state.connections[id]?.profile;
+  // Snapshots saved before pictures existed still get the current picture.
+  return snap ? { ...snap, picture: getMatch(id).picture } : tailorMatch(getMatch(id), state.me);
 }

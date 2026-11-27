@@ -152,4 +152,20 @@ describe("match cards and chats across 300 participant profiles", () => {
     expect(tailorMatch(MATCHES[1], mixed).bio).toContain("out on a trail");
     expect(tailorMatch(MATCHES[0], onlyOwn).bio).toContain("busy with pottery");
   });
+
+  it("the match's 'I'm looking for' agrees with their relationship goal", () => {
+    const SAYS: Record<Goal, RegExp> = {
+      "long-term": /slow|long-term|something real/i,
+      "open-to-see": /see where|no rush/i,
+      casual: /light|serious|for now/i,
+    };
+    for (const me of users) {
+      for (const base of MATCHES) {
+        const m = tailorMatch(base, me);
+        const a = m.prompts.find((p) => p.q === "I'm looking for")!.a;
+        expect(a, `${m.name} (${m.goal})`).toMatch(SAYS[m.goal]);
+        for (const other of Object.keys(SAYS) as Goal[]) if (other !== m.goal) expect(a).not.toMatch(SAYS[other]);
+      }
+    }
+  });
 });

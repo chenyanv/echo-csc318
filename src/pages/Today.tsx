@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { InterestList, MatchHeader, MatchReasonBlock } from "../components/MatchDetails";
+import { MatchReasonBlock, ProfileCard } from "../components/MatchDetails";
 import { UndoBar } from "../components/ui/UndoBar";
 import { Avatar } from "../components/ui/Avatar";
 import { activeMatchId, isUndoable, pendingToday, todayMatchId } from "../state/reducer";
@@ -65,17 +65,11 @@ export default function Today() {
     <section>
       <p className="text-[13px] font-medium text-accent">Today's match</p>
 
-      <article className="card mt-3 p-5">
-        <MatchHeader match={match} />
-        <p className="mt-4 text-[15px] leading-relaxed">{match.bio}</p>
-
-        <div className="mt-5">
-          <InterestList me={state.me} match={match} />
-        </div>
-
-        <hr className="my-6 border-line" />
-        <MatchReasonBlock me={state.me} match={match} />
-      </article>
+      <div className="mt-3">
+        <ProfileCard me={state.me} match={match} withHeader>
+          <MatchReasonBlock me={state.me} match={match} />
+        </ProfileCard>
+      </div>
 
       <BottomBar>
         {undo && <UndoBar inline {...undo} />}
